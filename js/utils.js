@@ -95,12 +95,16 @@ export function createTooltip() {
     move(x, y) {
       // x/y son clientX/clientY (viewport); con position:fixed no se suma scroll
       const rect   = el.getBoundingClientRect();
+      const w      = rect.width  || 220;
+      const h      = rect.height || 70;
       const margin = 12;
       let left = x + margin;
-      let top  = y - rect.height / 2;
-      if (left + rect.width  > window.innerWidth  - margin) left = x - rect.width - margin;
-      if (top < margin) top = margin;
-      if (top + rect.height  > window.innerHeight - margin) top  = window.innerHeight - rect.height - margin;
+      let top  = y - h / 2;
+      // Preferir colocar a la izquierda del cursor si desborda por la derecha
+      if (left + w > window.innerWidth - margin) left = x - w - margin;
+      // Clamp final: nunca salir del viewport en ninguna dirección
+      left = Math.max(margin, Math.min(left, window.innerWidth  - w - margin));
+      top  = Math.max(margin, Math.min(top,  window.innerHeight - h - margin));
       el.style.left = `${left}px`;
       el.style.top  = `${top}px`;
     },

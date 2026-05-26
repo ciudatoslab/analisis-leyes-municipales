@@ -232,6 +232,11 @@
       border-left: none;
       padding-left: 0;
       margin-left: 0;
+      background: none;
+    }
+
+    .pullquote .pullquote__text {
+      text-align: center;
     }
     .pullquote::before { color: var(--city-cbba); }
     .pullquote__text  { color: var(--color-text); font-size: clamp(1.05rem, 2vw, 1.25rem); line-height: 1.7; }
@@ -707,6 +712,18 @@
           </div>
         </div>
       </div>
+
+      <div class="container container--wide">
+        <div class="chart-card reveal" style="margin-top:var(--space-6)">
+          <div class="chart-card__header">
+            <div class="chart-card__eyebrow">Leyes por distrito urbano · La Paz</div>
+            <p class="chart-card__subtitle">Concentración de leyes georreferenciadas por distrito. Pasa el cursor para ver el detalle.</p>
+          </div>
+          <div class="chart-card__body">
+            <div id="choropleth-lp"></div>
+          </div>
+        </div>
+      </div>
     </section>
 
 
@@ -769,6 +786,18 @@
           </div>
         </div>
       </div>
+
+      <div class="container container--wide">
+        <div class="chart-card reveal" style="margin-top:var(--space-6)">
+          <div class="chart-card__header">
+            <div class="chart-card__eyebrow">Leyes por distrito urbano · Cochabamba</div>
+            <p class="chart-card__subtitle">Concentración de leyes georreferenciadas por distrito. Pasa el cursor para ver el detalle.</p>
+          </div>
+          <div class="chart-card__body">
+            <div id="choropleth-cbba"></div>
+          </div>
+        </div>
+      </div>
     </section>
 
 
@@ -822,6 +851,18 @@
           </div>
           <div class="chart-card__body">
             <div id="map-sc"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="container container--wide">
+        <div class="chart-card reveal" style="margin-top:var(--space-6)">
+          <div class="chart-card__header">
+            <div class="chart-card__eyebrow">Leyes por distrito urbano · Santa Cruz</div>
+            <p class="chart-card__subtitle">Concentración de leyes georreferenciadas por distrito. Pasa el cursor para ver el detalle.</p>
+          </div>
+          <div class="chart-card__body">
+            <div id="choropleth-sc"></div>
           </div>
         </div>
       </div>

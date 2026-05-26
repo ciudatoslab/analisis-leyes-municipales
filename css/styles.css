@@ -228,7 +228,7 @@ h1, h2, h3, h4, h5, h6 {
   position: relative;
   margin-block: var(--space-16);
   padding: var(--space-10) var(--space-12);
-  background: var(--color-bg-alt);
+  background: none;
   border-radius: var(--radius-xl);
   text-align: center;
 }
@@ -254,6 +254,11 @@ h1, h2, h3, h4, h5, h6 {
   line-height: var(--leading-snug);
   color: var(--color-text);
   margin-bottom: var(--space-4);
+  text-align: center;
+}
+
+.pullquote .pullquote__text {
+  text-align: center;
 }
 
 .pullquote__attribution {
@@ -450,6 +455,10 @@ h1, h2, h3, h4, h5, h6 {
 
   .article-body p {
     text-align: left;
+  }
+
+  .pullquote .pullquote__text {
+    text-align: center;
   }
 }
 

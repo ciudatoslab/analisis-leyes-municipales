@@ -50,20 +50,38 @@ function parseMonth(dateStr) {
   return null;
 }
 
-function computeSubtemas(csv, city, limit, mergeBlank = false) {
-  const cityRows = csv.filter(r => r.ciudad === city);
-  const total    = cityRows.length;
-  const counts   = new Map();
-  cityRows.forEach(r => {
-    let key = (r.subtemas || '').trim();
-    if (!key && mergeBlank) key = 'Reconocimiento a ciudadanos u org. destacadas';
-    if (!key) return;
-    counts.set(key, (counts.get(key) || 0) + 1);
+function buildSubtemasHierarchy(csv, city, excludeTemas = [], maxTemas = 8, maxSubPer = 6) {
+  const rows  = csv.filter(r => r.ciudad === city);
+  const total = rows.length;
+  const tMap  = new Map();
+
+  rows.forEach(r => {
+    const tema = (r.tema || '').trim();
+    let   sub  = (r.subtemas || '').trim();
+    if (!tema || excludeTemas.includes(tema)) return;
+    if (!sub) sub = tema;
+    if (!tMap.has(tema)) tMap.set(tema, new Map());
+    const m = tMap.get(tema);
+    m.set(sub, (m.get(sub) || 0) + 1);
   });
-  return [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit)
-    .map(([label, value]) => ({ label, value, pct: value / total * 100 }));
+
+  const children = [...tMap.entries()]
+    .map(([name, m]) => {
+      const tTotal = [...m.values()].reduce((a, b) => a + b, 0);
+      return {
+        name,
+        tTotal,
+        pct: tTotal / total * 100,
+        children: [...m.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, maxSubPer)
+          .map(([sname, val]) => ({ name: sname, value: val, pct: val / total * 100 })),
+      };
+    })
+    .sort((a, b) => b.tTotal - a.tTotal)
+    .slice(0, maxTemas);
+
+  return { name: 'root', children };
 }
 
 function initCounters() {
@@ -227,24 +245,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   initHeroStamp();
   initCounters();
 
-  const [csv, geo] = await Promise.all([
+  const [csv, geo, distLp, distCbba, distSc] = await Promise.all([
     d3.csv('data/leyes_limpias.csv'),
     d3.json('data/leyes_limpias.geojson'),
+    d3.json('data/distritos-lapaz.geojson'),
+    d3.json('data/distritos-cochabamba.geojson'),
+    d3.json('data/distritos-santacruz.geojson'),
   ]);
-
-  const lpSubtemas   = computeSubtemas(csv, 'La Paz',     8);
-  const cbbaSubtemas = computeSubtemas(csv, 'Cochabamba', 8);
-  const scSubtemas   = computeSubtemas(csv, 'Santa Cruz', 10, true);
 
   initBarCiudad(csv);
   initTimeline(csv);
   initTemasGeneral(csv);
-  initSubtemas('chart-subtemas-lp',   lpSubtemas,   C.lp);
-  initSubtemas('chart-subtemas-cbba', cbbaSubtemas, C.cbba);
-  initSubtemas('chart-subtemas-sc',   scSubtemas,   C.sc);
+  initSubtemasHierarchy('chart-subtemas-lp',   csv, 'La Paz',     ['administracion publica', 'impuestos']);
+  initSubtemasHierarchy('chart-subtemas-cbba', csv, 'Cochabamba', []);
+  initSubtemasHierarchy('chart-subtemas-sc',   csv, 'Santa Cruz', []);
   initMap(geo, 'La Paz',     'map-lp');
   initMap(geo, 'Cochabamba', 'map-cbba');
   initMap(geo, 'Santa Cruz', 'map-sc');
+  const distLpUrbano = { ...distLp, features: distLp.features.filter(f => f.properties.tipo !== 'RU') };
+  initChoropleth('choropleth-lp',   distLpUrbano, geo, 'La Paz',  C.lp,   d => `Distrito ${d.distrito}`,         d => d.macro_vige || '');
+  initChoropleth('choropleth-cbba', distCbba, geo, 'Cochabamba', C.cbba, d => `Distrito ${d.Num_dist}`,         d => '');
+  initChoropleth('choropleth-sc',   distSc,   geo, 'Santa Cruz', C.sc,   d => `Distrito ${d.distrito}`,         d => '');
 });
 
 
@@ -659,127 +680,251 @@ function initTemasGeneral(csv) {
 
 
 // ═══════════════════════════════════════════════════════════════
-// SUBTEMAS — Horizontal bar por ciudad
+// SUBTEMAS — Bubble pack jerárquico por ciudad
 // ═══════════════════════════════════════════════════════════════
 
-function initSubtemas(containerId, data, color) {
+function wrapCircleText(textEl, text, r, fontSize) {
+  const words  = text.split(/\s+/);
+  const cw     = fontSize * 0.54;
+  const maxW   = r * 1.7;
+  const lineH  = fontSize * 1.28;
+  const maxLn  = Math.max(1, Math.floor(r * 1.6 / lineH));
+
+  const lines = [];
+  let cur = [];
+  words.forEach(w => {
+    const test = [...cur, w].join(' ');
+    if (test.length * cw > maxW && cur.length) {
+      lines.push(cur.join(' '));
+      cur = [w];
+    } else {
+      cur.push(w);
+    }
+  });
+  if (cur.length) lines.push(cur.join(' '));
+
+  const shown  = lines.slice(0, maxLn);
+  const startY = -((shown.length - 1) * lineH) / 2;
+  shown.forEach((line, i) => {
+    textEl.append('tspan')
+      .attr('x', textEl.attr('x'))
+      .attr('dy', i === 0 ? startY : lineH)
+      .text(line);
+  });
+}
+
+function initSubtemasHierarchy(containerId, csv, city, excludeTemas = []) {
   const el = document.getElementById(containerId);
-  if (!el || !data.length) return;
+  if (!el) return;
+
+  const data = buildSubtemasHierarchy(csv, city, excludeTemas);
 
   responsiveChart(el, (totalW, isMobile, isFirst) => {
-    const onHover = (event, d) => tip.show(
-      `<strong>${d.label}</strong><br>${d.pct.toFixed(1)}% · ${fmtN(d.value)} leyes`,
-      event.clientX, event.clientY
-    );
+    const S   = Math.min(totalW, isMobile ? 400 : 580);
+    const pad = 6;
 
-    // ── MOBILE: etiqueta encima de la barra ───────────────────
-    if (isMobile) {
-      const rowH   = 62;
-      const padX   = 4;
-      const barH   = 18;
-      const labelH = 20;
-      const pctW   = 52;
-      const w      = totalW - padX * 2 - pctW;
-      const totalH = data.length * rowH + 12;
+    const svg = d3.select(el).append('svg')
+      .attr('width', '100%').attr('height', S)
+      .attr('viewBox', `0 0 ${S} ${S}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet');
 
-      const svg = d3.select(el).append('svg')
-        .attr('width', '100%').attr('height', totalH)
-        .attr('viewBox', `0 0 ${totalW} ${totalH}`)
-        .attr('preserveAspectRatio', 'xMidYMid meet');
+    const root = d3.hierarchy(data)
+      .sum(d => d.value || 0)
+      .sort((a, b) => b.value - a.value);
 
-      const x = d3.scaleLinear().domain([0, d3.max(data, d => d.pct)]).range([0, w]);
-      const rows = svg.selectAll('.sub-row').data(data).enter().append('g')
-        .attr('class', 'sub-row')
-        .attr('transform', (_, i) => `translate(${padX},${6 + i * rowH})`);
+    d3.pack()
+      .size([S - pad * 2, S - pad * 2])
+      .padding(d => d.depth === 0 ? 10 : 4)
+      (root);
 
-      rows.append('text')
-        .attr('x', 0).attr('y', labelH / 2).attr('dy', '0.35em')
-        .style('font-size', '14px').style('font-weight', '500').style('fill', C.text)
-        .text(d => d.label);
+    const g = svg.append('g').attr('transform', `translate(${pad},${pad})`);
+    const tColor = node => TEMA_COLOR[(node.depth === 1 ? node : node.parent).data.name] || C.muted;
 
-      rows.append('rect')
-        .attr('x', 0).attr('y', labelH + 6).attr('width', w).attr('height', barH).attr('rx', barH / 2)
-        .attr('fill', C.border);
+    const temaNodes = root.descendants().filter(d => d.depth === 1);
+    const subNodes  = root.descendants().filter(d => d.depth === 2);
 
-      const bars = rows.append('rect')
-        .attr('x', 0).attr('y', labelH + 6).attr('height', barH).attr('rx', barH / 2)
-        .attr('width', isFirst ? 0 : d => x(d.pct))
-        .attr('fill', color).attr('fill-opacity', 0.85)
-        .style('cursor', 'pointer')
-        .on('mouseover', onHover)
-        .on('mousemove', e => tip.move(e.clientX, e.clientY))
-        .on('mouseout', () => tip.hide());
+    // ── Tema wrapper rings ────────────────────────────────────
+    g.selectAll('.t-ring').data(temaNodes).enter().append('circle')
+      .attr('class', 't-ring')
+      .attr('cx', d => d.x).attr('cy', d => d.y).attr('r', d => d.r)
+      .attr('fill', d => tColor(d) + '12')
+      .attr('stroke', d => tColor(d))
+      .attr('stroke-width', 1.8).attr('stroke-opacity', 0.65);
 
-      const nums = rows.append('text')
-        .attr('x', isFirst ? 6 : d => x(d.pct) + 8)
-        .attr('y', labelH + 6 + barH / 2).attr('dy', '0.35em')
-        .style('font-size', '13px').style('font-weight', '700')
-        .style('fill', color).style('opacity', isFirst ? 0 : 1)
-        .text(d => d.pct.toFixed(1) + '%');
+    // ── Tema name labels (top inside ring) ────────────────────
+    g.selectAll('.t-lbl').data(temaNodes.filter(d => d.r > 28)).enter().append('text')
+      .attr('class', 't-lbl')
+      .attr('x', d => d.x)
+      .attr('y', d => d.y - d.r + Math.min(13, d.r * 0.2))
+      .attr('text-anchor', 'middle').attr('dy', '0.35em')
+      .style('font-size', d => `${Math.min(10, Math.max(7, d.r * 0.17))}px`)
+      .style('font-weight', '800').style('letter-spacing', '0.07em')
+      .style('text-transform', 'uppercase')
+      .style('fill', d => tColor(d)).style('pointer-events', 'none')
+      .text(d => {
+        const n = d.data.name;
+        const maxCh = Math.floor(d.r * 0.38);
+        return n.length > maxCh ? n.slice(0, maxCh - 1) + '…' : n;
+      });
 
-      if (isFirst) {
-        onVisibleOnce(el, () => {
-          bars.transition().duration(900).delay((_, i) => i * 60).ease(d3.easeCubicOut)
-            .attr('width', d => x(d.pct));
-          nums.transition().duration(400).delay((_, i) => i * 60 + 720)
-            .attr('x', d => x(d.pct) + 8).style('opacity', 1);
-        }, { threshold: 0.2 });
-      }
-      return;
+    // ── Subtema filled circles ────────────────────────────────
+    const subCircles = g.selectAll('.s-circle').data(subNodes).enter().append('circle')
+      .attr('class', 's-circle')
+      .attr('cx', d => d.x).attr('cy', d => d.y)
+      .attr('r', isFirst ? 0 : d => d.r)
+      .attr('fill', d => tColor(d)).attr('fill-opacity', 0.80)
+      .style('cursor', 'pointer')
+      .on('mouseover', (event, d) => {
+        d3.select(event.currentTarget).attr('fill-opacity', 1);
+        tip.show(
+          `<strong>${d.data.name}</strong><br>${fmtN(d.data.value)} leyes · ${d.data.pct.toFixed(1)}%`,
+          event.clientX, event.clientY
+        );
+      })
+      .on('mousemove', e => tip.move(e.clientX, e.clientY))
+      .on('mouseout', event => { d3.select(event.currentTarget).attr('fill-opacity', 0.80); tip.hide(); });
+
+    // ── Text labels inside subtema circles ────────────────────
+    const MIN_R = isMobile ? 22 : 18;
+    subNodes.filter(d => d.r >= MIN_R).forEach(d => {
+      const fs = Math.min(11, Math.max(7.5, d.r * 0.25));
+      const t  = g.append('text')
+        .attr('x', d.x).attr('y', d.y)
+        .attr('text-anchor', 'middle')
+        .style('font-size', `${fs}px`).style('font-weight', '600')
+        .style('fill', 'white').style('pointer-events', 'none');
+      wrapCircleText(t, d.data.name, d.r, fs);
+    });
+
+    if (isFirst) {
+      onVisibleOnce(el, () => {
+        subCircles.transition().duration(650)
+          .delay((_, i) => i * 40)
+          .ease(d3.easeCubicOut)
+          .attr('r', d => d.r);
+      }, { threshold: 0.2 });
     }
+  });
+}
 
-    // ── DESKTOP: etiqueta a la izquierda ──────────────────────
-    const labelW = Math.min(Math.max(totalW * 0.44, 240), 340);
-    const margin = { top: 12, right: 72, bottom: 12, left: labelW };
-    const rowH   = 46;
-    const totalH = data.length * rowH + margin.top + margin.bottom;
-    const w      = totalW - margin.left - margin.right;
+
+// ═══════════════════════════════════════════════════════════════
+// CHOROPLETH — Leyes por distrito urbano (D3 SVG)
+// ═══════════════════════════════════════════════════════════════
+
+function initChoropleth(containerId, districtGeo, lawGeo, city, cityColor, labelFn, subLabelFn) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+
+  // Puntos georreferenciados de esta ciudad
+  const pts = lawGeo.features.filter(f => f.geometry && f.properties.ciudad === city);
+
+  // Conteo punto-en-polígono
+  districtGeo.features.forEach(feat => {
+    feat.properties._count = pts.filter(f =>
+      d3.geoContains(feat, f.geometry.coordinates)
+    ).length;
+  });
+
+  const maxCount = d3.max(districtGeo.features, f => f.properties._count) || 1;
+  const lightColor = d3.interpolate('#F0F0F4', cityColor)(0.12);
+
+  responsiveChart(el, (totalW, isMobile, isFirst) => {
+    const legendH = 36;
+    const pad     = isMobile ? 12 : 20;
+    const mapH    = isMobile ? 300 : 420;
+    const totalH  = mapH + legendH;
+
+    const projection = d3.geoIdentity()
+      .reflectY(true)
+      .fitExtent([[pad, pad], [totalW - pad, mapH - pad]], districtGeo);
+    const path = d3.geoPath().projection(projection);
+
+    const colorScale = d3.scaleSequentialSqrt()
+      .domain([0, maxCount])
+      .interpolator(d3.interpolate(lightColor, cityColor));
 
     const svg = d3.select(el).append('svg')
       .attr('width', '100%').attr('height', totalH)
       .attr('viewBox', `0 0 ${totalW} ${totalH}`)
       .attr('preserveAspectRatio', 'xMidYMid meet');
 
-    const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
-    const x = d3.scaleLinear().domain([0, d3.max(data, d => d.pct)]).range([0, w]);
-    const y = d3.scaleBand().domain(data.map((_, i) => i))
-      .range([0, totalH - margin.top - margin.bottom]).padding(0.2);
-    const bh   = y.bandwidth();
-    const barH = 14;
+    const mapG = svg.append('g');
+    if (isFirst) mapG.attr('opacity', 0);
 
-    const rows = g.selectAll('.sub-row').data(data).enter().append('g')
-      .attr('class', 'sub-row').attr('transform', (_, i) => `translate(0,${y(i)})`);
-
-    rows.append('text')
-      .attr('x', -8).attr('y', bh / 2).attr('dy', '0.35em').attr('text-anchor', 'end')
-      .style('font-size', '12px').style('fill', C.text)
-      .text(d => d.label.length > 42 ? d.label.slice(0, 42) + '…' : d.label);
-
-    rows.append('rect').attr('x', 0).attr('y', (bh - barH) / 2).attr('width', w).attr('height', barH).attr('rx', barH / 2)
-      .attr('fill', C.border);
-
-    const bars = rows.append('rect')
-      .attr('x', 0).attr('y', (bh - barH) / 2).attr('height', barH).attr('rx', barH / 2)
-      .attr('width', isFirst ? 0 : d => x(d.pct))
-      .attr('fill', color).attr('fill-opacity', 0.85)
+    // ── Distritos ────────────────────────────────────────────
+    mapG.selectAll('path')
+      .data(districtGeo.features)
+      .enter().append('path')
+      .attr('d', path)
+      .attr('fill', d => d.properties._count > 0 ? colorScale(d.properties._count) : '#E4E4EC')
+      .attr('stroke', 'white')
+      .attr('stroke-width', isMobile ? 0.6 : 0.9)
       .style('cursor', 'pointer')
-      .on('mouseover', onHover)
+      .on('mouseover', (event, d) => {
+        d3.select(event.currentTarget).attr('stroke', cityColor).attr('stroke-width', 2);
+        const sub = subLabelFn(d.properties);
+        tip.show(
+          `<strong>${labelFn(d.properties)}</strong>${sub ? ` — ${sub}` : ''}<br>${fmtN(d.properties._count)} leyes`,
+          event.clientX, event.clientY
+        );
+      })
       .on('mousemove', e => tip.move(e.clientX, e.clientY))
-      .on('mouseout', () => tip.hide());
+      .on('mouseout', event => {
+        d3.select(event.currentTarget)
+          .attr('stroke', 'white')
+          .attr('stroke-width', isMobile ? 0.6 : 0.9);
+        tip.hide();
+      });
 
-    const nums = rows.append('text')
-      .attr('x', isFirst ? 0 : d => x(d.pct)).attr('y', bh / 2)
-      .attr('dy', '0.35em').attr('dx', 8)
-      .style('font-size', '11px').style('font-weight', '700')
-      .style('fill', color).style('opacity', isFirst ? 0 : 1)
-      .text(d => d.pct.toFixed(1) + '%');
+    // ── Etiquetas de número de distrito ──────────────────────
+    districtGeo.features.forEach(feat => {
+      const [cx, cy] = path.centroid(feat);
+      if (isNaN(cx) || isNaN(cy)) return;
+      const area = path.area(feat);
+      if (area < (isMobile ? 300 : 500)) return;
+      const dark = feat.properties._count > maxCount * 0.55;
+      mapG.append('text')
+        .attr('x', cx).attr('y', cy)
+        .attr('text-anchor', 'middle').attr('dy', '0.35em')
+        .style('font-size', isMobile ? '7.5px' : '9px')
+        .style('font-weight', '700')
+        .style('fill', dark ? 'rgba(255,255,255,0.9)' : C.muted)
+        .style('pointer-events', 'none')
+        .text(labelFn(feat.properties).replace('Distrito ', ''));
+    });
 
+    // ── Leyenda (gradiente) ───────────────────────────────────
+    const lW   = isMobile ? 130 : 180;
+    const lH   = 8;
+    const lX   = totalW - lW - pad;
+    const lY   = mapH + 14;
+    const gId  = `cgrad-${containerId}`;
+
+    const defs = svg.append('defs');
+    const grad = defs.append('linearGradient').attr('id', gId);
+    grad.append('stop').attr('offset', '0%').attr('stop-color', lightColor);
+    grad.append('stop').attr('offset', '100%').attr('stop-color', cityColor);
+
+    svg.append('rect')
+      .attr('x', lX).attr('y', lY)
+      .attr('width', lW).attr('height', lH).attr('rx', lH / 2)
+      .attr('fill', `url(#${gId})`);
+
+    const lblStyle = sel => sel
+      .style('font-size', '9px').style('fill', C.muted)
+      .style('font-family', "'Inter Tight', sans-serif");
+
+    svg.append('text').attr('x', lX).attr('y', lY - 4)
+      .call(lblStyle).text('0 leyes');
+    svg.append('text').attr('x', lX + lW).attr('y', lY - 4)
+      .attr('text-anchor', 'end')
+      .call(lblStyle).text(`${fmtN(maxCount)} leyes`);
+
+    // ── Animación de entrada ──────────────────────────────────
     if (isFirst) {
       onVisibleOnce(el, () => {
-        bars.transition().duration(900).delay((_, i) => i * 60).ease(d3.easeCubicOut)
-          .attr('width', d => x(d.pct));
-        nums.transition().duration(400).delay((_, i) => i * 60 + 720)
-          .attr('x', d => x(d.pct)).style('opacity', 1);
+        mapG.transition().duration(700).ease(d3.easeCubicOut).attr('opacity', 1);
       }, { threshold: 0.2 });
     }
   });
