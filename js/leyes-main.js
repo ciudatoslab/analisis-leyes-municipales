@@ -113,7 +113,27 @@ function initHeroStamp() {
   if (!docsGroup || !counterEl) return;
 
   // [x, y, rot]  — coordenadas en el viewBox 760×240
-  const positions = [
+  // En mobile el SVG renderiza ~118px de alto; las posiciones con y > 155
+  // desbordan visualmente sobre el título. Se usa una distribución
+  // concentrada en la banda superior y los bordes extremos.
+  const isMobile  = window.innerWidth < 540;
+  const positions = isMobile ? [
+    // ── Banda superior (y < 45) — ancho completo ────────────
+    [14, 5, -7],   [82, 20, 4],   [155, 4, -3],  [228, 22, 6],
+    [312, 7, -5],  [395, 21, 3],  [470, 5, -4],  [548, 20, 5],
+    [620, 4, -4],  [696, 18, 5],
+    // ── Segunda fila (y 26–42) ───────────────────────────────
+    [44, 34, 3],   [118, 26, -4], [200, 38, 5],
+    [498, 32, 4],  [572, 26, -5], [648, 36, 3],  [716, 28, -4],
+    // ── Lado izquierdo — escalonado (x 6–115, y 58–152) ─────
+    [6,  62, -3],  [82,  78,  5],
+    [18, 108,  4], [96, 124, -4],
+    [32, 148, -5],
+    // ── Lado derecho — escalonado (x 612–724, y 64–150) ─────
+    [718, 66,  4], [638, 84, -3],
+    [708, 116, -5],[614, 132,  4],
+    [694, 150,  3],
+  ] : [
     // banda superior
     [25, 6, -7],   [88, 24, 4],   [148, 4, -3],  [212, 26, 6],
     [490, 26, -5], [556, 4, 3],   [625, 22, -4], [702, 8, 5],
@@ -142,7 +162,9 @@ function initHeroStamp() {
 
     const doc = document.createElementNS(SVG_NS, 'g');
     doc.setAttribute('class', 'stamp-doc');
-    doc.style.animationDelay = `${docDelay}s`;
+    doc.style.setProperty('--appear-delay', `${docDelay}s`);
+    doc.style.setProperty('--float-delay',  `${(docDelay + 0.55).toFixed(2)}s`);
+    doc.style.setProperty('--float-dur',    `${(2.5 + (i % 7) * 0.28).toFixed(2)}s`);
     doc.innerHTML = `
       <rect width="28" height="36" rx="1.5" fill="rgba(244,238,224,0.94)" stroke="rgba(0,0,0,0.08)" stroke-width="0.4"/>
       <line x1="3.5" y1="7"    x2="24.5" y2="7"    stroke="rgba(40,40,55,0.46)" stroke-width="0.6"  stroke-linecap="round"/>
@@ -321,7 +343,7 @@ function initBarCiudad(csv) {
       .call(d3.axisBottom(x).tickSize(0))
       .call(gr => {
         gr.select('.domain').remove();
-        gr.selectAll('.tick text').style('fill', C.text).style('font-size', isMobile ? '14px' : '15px').style('font-weight', '700');
+        gr.selectAll('.tick text').style('fill', C.text).style('font-size', isMobile ? '11px' : '15px').style('font-weight', '700');
       });
 
     const bars = g.selectAll('.bar')
@@ -424,15 +446,15 @@ function initTimeline(csv) {
 
     // ── Leyenda ───────────────────────────────────────────────
     const lgd = svg.append('g').attr('transform', `translate(${M.left},12)`);
-    const lgdStep = isMobile ? Math.min(iW / 3, 120) : Math.min(iW / 3, 160);
+    const lgdStep = isMobile ? iW / 3 : Math.min(iW / 3, 160);
     cities.forEach((city, i) => {
       const lx = i * lgdStep;
-      lgd.append('line').attr('x1', lx).attr('y1', 8).attr('x2', lx + 16).attr('y2', 8)
+      lgd.append('line').attr('x1', lx).attr('y1', 8).attr('x2', lx + 14).attr('y2', 8)
         .attr('stroke', CITY_COLOR[city]).attr('stroke-width', 2);
-      lgd.append('circle').attr('cx', lx + 8).attr('cy', 8).attr('r', 3)
+      lgd.append('circle').attr('cx', lx + 7).attr('cy', 8).attr('r', 3)
         .attr('fill', CITY_COLOR[city]);
-      lgd.append('text').attr('x', lx + 22).attr('y', 8).attr('dy', '0.35em')
-        .style('fill', C.text).style('font-size', isMobile ? '13px' : '12px').text(city);
+      lgd.append('text').attr('x', lx + 19).attr('y', 8).attr('dy', '0.35em')
+        .style('fill', C.text).style('font-size', isMobile ? '11px' : '12px').text(city);
     });
 
     const xPad   = iW * 0.015;
@@ -588,7 +610,10 @@ function initTemasGeneral(csv) {
       rows.append('text')
         .attr('x', 0).attr('y', labelH / 2).attr('dy', '0.35em')
         .style('font-size', '14px').style('font-weight', '500').style('fill', C.text)
-        .text(d => d.label);
+        .text(d => {
+          const maxCh = Math.floor((totalW - padX * 2 - pctW) / 7.8);
+          return d.label.length > maxCh ? d.label.slice(0, maxCh - 1) + '…' : d.label;
+        });
 
       rows.append('rect')
         .attr('x', 0).attr('y', labelH + 6).attr('width', w).attr('height', barH).attr('rx', barH / 2)
@@ -963,7 +988,9 @@ function initMap(geo, city, containerId) {
 
   // Mapa Leaflet
   const map = L.map(el, {
-    scrollWheelZoom: false,   // evita zoom accidental al desplazarse por el artículo
+    scrollWheelZoom: false,
+    touchZoom:       false,   // evita que el pellizco quede atrapado en el mapa en mobile
+    dragging:        !L.Browser.touch, // en touch, desactiva drag para que el dedo scrollee la página
     zoomControl: true,
     attributionControl: true,
   });

@@ -39,7 +39,7 @@
       --color-text-inv:   #F4F4F4;
       --color-border:     #D8D8E0;
       --color-divider:    #D0D0DA;
-      --color-accent:     #B54B68;
+      --color-accent:     #3C6BAA;
       --color-accent-2:   #F1B62A;
       --color-accent-3:   #20A47A;
       --data-1: #B54B68;
@@ -60,10 +60,14 @@
       --font-mono:  'JetBrains Mono', 'Courier New', monospace;
     }
 
-    /* Base: fondo claro, texto oscuro */
+    /* Base: fondo oscuro en extremos (hero + créditos); secciones de contenido cubren con su propio bg */
     body {
-      background: var(--color-bg);
+      background: #30303D;
       color: var(--color-text);
+    }
+
+    .section:not(.section--alt) {
+      background: var(--color-bg);
     }
 
     /* Fuente de cuerpo: Lora para texto narrativo */
@@ -393,14 +397,21 @@
       margin-top: clamp(0.18rem, 0.4vh, 0.32rem);
     }
 
-    /* Cada documento (papel) hace fade-in */
+    /* Cada documento (papel): aparece y luego flota suavemente */
     .stamp-doc {
       opacity: 0;
-      animation: stamp-doc-in 0.42s ease-out forwards;
+      animation:
+        stamp-doc-in    0.42s ease-out    var(--appear-delay, 0s)  forwards,
+        stamp-doc-float var(--float-dur, 3s) ease-in-out var(--float-delay, 2s) infinite;
     }
     @keyframes stamp-doc-in {
       0%   { opacity: 0; }
       100% { opacity: 1; }
+    }
+    @keyframes stamp-doc-float {
+      0%, 100% { transform: translateY(0px)   rotate(0deg); }
+      40%      { transform: translateY(-3px)  rotate(0.4deg); }
+      70%      { transform: translateY(-1.5px) rotate(-0.25deg); }
     }
 
     /* Sello aterriza con escala + rotación */
@@ -920,7 +931,7 @@
       <div class="container container--text">
         <div class="article-body">
           <h2 style="font-size:var(--text-2xl); margin-bottom:var(--space-4);">Datos y metodología</h2>
-          <div class="callout">
+          <div>
             <p>
               Para conformar la base de datos, realizamos un <em>scraping</em> a las gacetas municipales de La Paz, Cochabamba y Santa Cruz, obteniendo un total de 1.527 leyes aprobadas y sancionadas entre enero de 2021 y marzo de 2026. Posteriormente, el equipo de Ciudatos Lab realizó un etiquetado manual para identificar los temas, subtemas y la ubicación geográfica de cada ley municipal, cuando correspondía. La base de datos está abierta.
             </p>
@@ -932,31 +943,24 @@
       </div>
     </section>
 
-  </main>
-
-
-  <!-- ══════════════════════════════════════════════════════
+      <!-- ══════════════════════════════════════════════════════
        CRÉDITOS
        ══════════════════════════════════════════════════════ -->
-  <section style="background:#30303D; padding: var(--space-12) 0; text-align:center;">
-    <div class="container container--text">
-      <p style="font-family:var(--font-sans); font-size:var(--text-sm); color:rgba(244,244,244,0.9); line-height:2; margin-bottom:var(--space-4);">
-        <strong style="color:#F4F4F4;">Entrevistas:</strong>
-        <span style="color:rgba(244,244,244,0.6);">Fuente anónima (La Paz) · Esteban Morales · José Antonio Prado</span><br>
-        <strong style="color:#F4F4F4;">Autoría y recolección de datos:</strong>
-        <span style="color:rgba(244,244,244,0.6);">
-          Jocabet Alí, Edson Arteaga, Diego Bustamante, Silvana Cachi, Xisel Canaviri, Alexandra Crespo, Pablo Gómez, Darling Hurtado, Teresa Mamani, Thamy Montecinos, Jhoana Paula, Valeria Peredo, Claudia Rojas, Silvia Vasquez, Jimena Villca
-        </span><br>
-        <strong style="color:#F4F4F4;">Coordinación:</strong>
-        <span style="color:rgba(244,244,244,0.6);">Valeria Peredo</span>
-      </p>
-
-      <div style="margin-top:var(--space-8); display:flex; align-items:center; justify-content:center;">
-        <span style="font-family:var(--font-sans); font-size:0.72rem; color:rgba(244,244,244,0.35); letter-spacing:0.15em; text-transform:uppercase;">Ciudatos Lab · 2026</span>
+    <section class="section" style="background:#30303D">
+      <div class="container container--text">
+        <div class="article-body">
+          <h2 style="font-size:var(--text-2xl); margin-bottom:var(--space-4); color:#F4F4F4;">Créditos</h2>
+          <h3 style="color:#F4F4F4;">Entrevistas</h3>
+          <p style="color:#F4F4F4;">Esteban Morales, experto en gobernanza municipal. <br>José Antonio Prado, activista ciudadano.<br> Fuente anónima, funcionaria del municipio de La Paz.</p>
+          <h3 style="color:#F4F4F4;">Autoría y recolección de datos</h3>
+          <p style="color:#F4F4F4;">Jocabet Alí, Edson Arteaga, Diego Bustamante, Silvana Cachi, Xisel Canaviri, Alexandra Crespo, Pablo Gómez, Darling Hurtado, Teresa Mamani, Thamy Montecinos, Jhoana Paula, Valeria Peredo, Claudia Rojas, Silvia Vasquez, Jimena Villca.</p>
+          <h3 style="color:#F4F4F4;">Coordinación</h3>
+          <p style="color:#F4F4F4;">Valeria Peredo</p>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
 
+  </main>
 
   <!-- D3.js v7 desde CDN -->
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
