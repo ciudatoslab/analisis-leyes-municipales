@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>¿Qué temas priorizaron los Concejos Municipales salientes? — Ciudatos Lab</title>
+  <meta name="description"
+    content="Analizamos 1.527 leyes municipales de La Paz, Cochabamba y Santa Cruz. Un análisis de datos de Ciudatos Lab 2026.">
+  <meta name="author" content="Ciudatos Lab">
+
+  <meta property="og:title" content="¿Qué temas priorizaron los Concejos Municipales salientes?">
+  <meta property="og:description" content="Análisis de 1.527 leyes municipales de las tres ciudades del eje central de Bolivia.">
+  <meta property="og:type" content="article">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9/dist/leaflet.css">
+
+  <style>
+    :root {
+      /* ── Paleta ── */
+      --color-bg:         #F4F4F4;
+      --color-bg-alt:     #EBEBEB;
+      --color-bg-card:    #FFFFFF;
+      --color-bg-dark:    #30303D;
+      --color-text:       #30303D;
+      --color-text-muted: #5A5A6A;
+      --color-text-light: #8A8A9A;
+      --color-text-inv:   #F4F4F4;
+      --color-border:     #D8D8E0;
+      --color-divider:    #D0D0DA;
+      --color-accent:     #B54B68;
+      --color-accent-2:   #F1B62A;
+      --color-accent-3:   #20A47A;
+      --data-1: #B54B68;
+      --data-2: #3C6BAA;
+      --data-3: #20A47A;
+      --data-4: #F1B62A;
+      --data-5: #7368C4;
+      --data-6: #30303D;
+
+      /* ── Ciudades ── */
+      --city-lp:   #B54B68;
+      --city-cbba: #3C6BAA;
+      --city-sc:   #20A47A;
+
+      /* ── Tipografía ── */
+      --font-serif: 'Lora', Georgia, serif;
+      --font-sans:  'Inter Tight', 'Inter', system-ui, sans-serif;
+      --font-mono:  'JetBrains Mono', 'Courier New', monospace;
+    }
+
+    /* Base: fondo claro, texto oscuro */
+    body {
+      background: var(--color-bg);
+      color: var(--color-text);
+    }
+
+    /* Fuente de cuerpo: Lora para texto narrativo */
+    .article-body p,
+    .narrative-lead,
+    .hero__subtitle,
+    .pullquote__text,
+    .callout p {
+      font-family: var(--font-serif);
+    }
+
+    /* Headings: Inter Tight */
+    h1, h2, h3, h4, h5, h6 {
+      font-family: var(--font-sans) !important;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: #30303D;
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: clamp(4rem, 8vh, 6rem) clamp(1.5rem, 5vw, 5rem) clamp(5rem, 10vh, 7rem);
+      gap: clamp(1.5rem, 3vh, 2.5rem);
+    }
+
+    .hero::before { display: none; }
+
+    /* Wrapper que agrupa animación + texto para distribuirlos como una unidad */
+    .hero__body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(1rem, 2.5vh, 2rem);
+      width: 100%;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero__content { position: relative; z-index: 2; max-width: 700px; width: 100%; text-align: center; }
+
+    .hero__title {
+      font-family: var(--font-sans) !important;
+      font-size: clamp(2rem, 5vw, 4rem) !important;
+      font-weight: 800 !important;
+      line-height: 1.1 !important;
+      letter-spacing: -0.025em !important;
+      color: #FFFFFF !important;
+      margin-bottom: var(--space-4);
+      text-align: center;
+    }
+
+    .hero__title .serif-italic {
+      display: block;
+      font-family: var(--font-serif) !important;
+      font-style: italic;
+      font-weight: 400;
+      color: #F1B62A !important;
+      font-size: 0.84em;
+    }
+
+    .hero__subtitle {
+      font-family: var(--font-serif);
+      font-size: clamp(0.95rem, 1.7vw, 1.15rem);
+      line-height: 1.75;
+      color: rgba(255,255,255,0.65) !important;
+      max-width: 580px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .hero__meta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-4);
+    }
+
+    .hero__logo {
+      height: 50px;
+      width: auto;
+      display: block;
+      padding: 5px 14px;
+      border-radius: 6px;
+    }
+
+    .hero__authors { justify-content: center; }
+
+    .hero__author {
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.45) !important;
+    }
+
+    .hero__scroll-hint {
+      position: absolute;
+      bottom: var(--space-8);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-2);
+      color: rgba(255,255,255,0.2);
+      font-size: 0.68rem;
+      font-family: var(--font-sans);
+      letter-spacing: 0.12em;
+      z-index: 2;
+    }
+
+    .hero__scroll-hint svg { width: 18px; animation: bounce 2.2s ease-in-out infinite; }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(5px); }
+    }
+
+    /* ── Tipografía narrativa ── */
+    .narrative-lead {
+      font-size: clamp(1.1rem, 2.1vw, 1.35rem);
+      line-height: 1.82;
+      color: var(--color-text);
+    }
+
+    .article-body p {
+      line-height: 1.82;
+      color: var(--color-text);
+    }
+
+
+    .article-body h2 {
+      font-size: clamp(1.7rem, 3.2vw, 2.5rem) !important;
+      font-weight: 700 !important;
+      letter-spacing: -0.02em;
+      line-height: 1.2 !important;
+      margin-block: var(--space-8) var(--space-4) !important;
+      color: var(--color-text);
+    }
+
+    /* ── Chart cards ── */
+    .chart-card {
+      border-radius: var(--radius-lg);
+    }
+
+    .chart-card__eyebrow {
+      font-family: var(--font-sans);
+      font-size: 0.66rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: var(--space-1);
+    }
+
+    .chart-card__title  { font-family: var(--font-sans) !important; color: var(--color-text); }
+    .chart-card__subtitle { font-family: var(--font-sans); color: var(--color-text-muted); }
+    .chart-card__footer { color: var(--color-text-light); border-color: var(--color-border); }
+
+    /* ── Pullquote ── */
+    .pullquote {
+      border-left: none;
+      padding-left: 0;
+      margin-left: 0;
+    }
+    .pullquote::before { color: var(--city-cbba); }
+    .pullquote__text  { color: var(--color-text); font-size: clamp(1.05rem, 2vw, 1.25rem); line-height: 1.7; }
+    .pullquote__attribution { font-family: var(--font-sans); font-size: 0.85rem; color: var(--color-text-muted); margin-top: var(--space-3); display: block; }
+
+    /* ── Callout ── */
+    .callout {
+      background: rgba(181,75,104,0.04);
+      border: 1px solid rgba(181,75,104,0.2);
+      border-radius: var(--radius);
+    }
+
+    .callout p { font-size: 0.97rem; line-height: 1.72; color: var(--color-text); }
+
+    /* ── Sección alternada ── */
+    .section--alt { background: var(--color-bg-alt); }
+
+    /* ── Ciudad badge ── */
+    .city-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-family: var(--font-sans);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-left: var(--space-2);
+      vertical-align: middle;
+    }
+
+    .city-badge--lp   { background: rgba(181,75,104,0.12);  color: var(--city-lp);   }
+    .city-badge--cbba { background: rgba(60,107,170,0.12);  color: var(--city-cbba); }
+    .city-badge--sc   { background: rgba(32,164,122,0.12);  color: var(--city-sc);   }
+
+    /* ── Tooltip ── */
+    .chart-tooltip {
+      position: fixed;
+      background: #30303D;
+      color: #F4F4F4;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 9px 13px;
+      font-family: 'Inter Tight', 'Inter', sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 9999;
+      transition: opacity 0.12s;
+      max-width: 250px;
+      box-shadow: 0 4px 16px rgba(48,48,61,0.25);
+    }
+
+    /* ── Progress bar ── */
+    .reading-progress { background: transparent; }
+    .reading-progress__bar { background: var(--city-cbba); }
+
+    /* ── Responsive ── */
+    @media (max-width: 767px) {
+      .hero {
+        min-height: 100dvh;
+        padding: clamp(2.5rem, 5vh, 4rem) clamp(1.25rem, 4vw, 2rem);
+        /* 3 ítems (meta · body · scroll-hint) distribuidos en toda la altura */
+        justify-content: space-between;
+        gap: 0;
+      }
+      .hero__body { gap: clamp(0.75rem, 1.8vh, 1.25rem); }
+      .hero__title { font-size: clamp(1.75rem, 6.5vw, 2.4rem) !important; }
+      .hero__subtitle { font-size: 0.9rem !important; }
+      /* scroll-hint entra al flujo flex para participar en space-between */
+      .hero__scroll-hint {
+        position: relative;
+        bottom: auto;
+        left: auto;
+        transform: none;
+        align-self: center;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .narrative-lead { font-size: 1.05rem; }
+    }
+
+    /* ══════════════════════════════════════════════════════
+       HERO — Contador + sellos
+       ══════════════════════════════════════════════════════ */
+    .hero-stamp {
+      position: relative;
+      z-index: 1;
+      pointer-events: none;
+      width: min(94%, 760px);
+    }
+
+    .stamp-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+
+    .stamp-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      text-align: center;
+    }
+
+    .stamp-counter {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-weight: 800;
+      font-size: clamp(3.4rem, 9.4vw, 5.6rem);
+      color: #fff;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+      text-shadow:
+        0 2px 18px rgba(0,0,0,0.55),
+        0 0 32px rgba(48,48,61,0.6);
+      will-change: transform;
+    }
+
+    .stamp-counter.is-done {
+      animation: stamp-counter-pulse 0.7s ease-out;
+    }
+    @keyframes stamp-counter-pulse {
+      0%   { transform: scale(1);     text-shadow: 0 0 0 rgba(255,255,255,0); }
+      40%  { transform: scale(1.035); text-shadow: 0 0 36px rgba(255,255,255,0.28); }
+      100% { transform: scale(1);     text-shadow: 0 0 0 rgba(255,255,255,0); }
+    }
+
+    .stamp-label {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: clamp(0.7rem, 1.4vw, 0.88rem);
+      font-weight: 600;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+      margin-top: clamp(0.35rem, 0.8vh, 0.6rem);
+    }
+
+    .stamp-sublabel {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: clamp(0.62rem, 1.15vw, 0.74rem);
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.34);
+      margin-top: clamp(0.18rem, 0.4vh, 0.32rem);
+    }
+
+    /* Cada documento (papel) hace fade-in */
+    .stamp-doc {
+      opacity: 0;
+      animation: stamp-doc-in 0.42s ease-out forwards;
+    }
+    @keyframes stamp-doc-in {
+      0%   { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    /* Sello aterriza con escala + rotación */
+    .stamp-seal {
+      opacity: 0;
+      transform: scale(2.6) rotate(-22deg);
+      animation: stamp-seal-in 0.36s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    @keyframes stamp-seal-in {
+      0%   { opacity: 0;    transform: scale(2.6) rotate(-22deg); }
+      55%  { opacity: 0.95; }
+      100% { opacity: 0.9;  transform: scale(1)   rotate(0deg);   }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .stamp-doc  { opacity: 1; animation: none; }
+      .stamp-seal { opacity: 0.9; transform: none; animation: none; }
+    }
+
+    /* ── Leaflet: neutralizar los resets globales de SVG/IMG ── */
+    /* styles.css aplica:
+         img, video, svg       { display: block; max-width: 100%; }
+         .chart-card__body svg { width: 100%; overflow: visible; }
+       Leaflet asigna width/height por atributo a sus <svg> overlays
+       (más grandes que el contenedor) y a sus <img> de tiles (256×256).
+       Esas reglas globales colapsan ambos al ancho del contenedor —
+       el SVG hace que los marcadores queden fuera del viewport y las
+       tiles del mapa base se apilan/desaparecen. */
+    .leaflet-container,
+    .leaflet-container * {
+      max-width: none !important;
+    }
+    .leaflet-container img {
+      max-width: none !important;
+      width: auto;
+      height: auto;
+    }
+    .leaflet-container svg {
+      width: auto !important;
+      height: auto !important;
+      overflow: hidden;
+    }
+    .leaflet-container { overflow: hidden; }
+  </style>
+</head>
+
+<body>
+
+  <a href="#contenido-principal" class="skip-link">Ir al contenido</a>
+
+  <div class="reading-progress" aria-hidden="true">
+    <div class="reading-progress__bar"></div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       HERO
+       ══════════════════════════════════════════════════════ -->
+  <header class="hero" aria-label="Encabezado del artículo">
+
+    <!-- Logo Ciudatos Lab -->
+    <div class="hero__meta" style="position:relative;z-index:2;">
+      <img src="img/logo-ciudatos.png" alt="Ciudatos Lab" class="hero__logo">
+    </div>
+
+    <!-- Cuerpo central: animación + título agrupados -->
+    <div class="hero__body">
+
+    <!-- Animación: contador + sellos sobre documentos -->
+    <div class="hero-stamp" aria-hidden="true" style="position:relative;z-index:2;">
+      <svg class="stamp-svg" viewBox="0 0 760 240" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <g class="stamp-docs"></g>
+      </svg>
+      <div class="stamp-overlay">
+        <div class="stamp-counter">0</div>
+        <div class="stamp-label">leyes municipales</div>
+        <div class="stamp-sublabel">3 ciudades · 5 años</div>
+      </div>
+    </div>
+
+    <!-- Título y texto -->
+    <div class="hero__content" style="position:relative;z-index:2;">
+
+      <h1 class="article-title hero__title">
+        ¿Qué temas priorizaron los Concejos Municipales salientes?
+      </h1>
+
+      <p class="article-subtitle hero__subtitle">
+        Analizamos y georreferenciamos más de 1.500 leyes sancionadas durante la gestión saliente por los Concejos Municipales de La Paz, Cochabamba y Santa Cruz.
+      </p>
+
+      <div class="hero__authors" style="margin-top:var(--space-4);text-align:center;">
+        <span class="hero__author">
+          Por <strong style="color:rgba(255,255,255,0.75)"><a href="https://ciudatoslab.org/">Ciudatos Lab</a></strong>
+        </span>
+      </div>
+
+    </div><!-- /hero__content -->
+    </div><!-- /hero__body -->
+
+    <div class="hero__scroll-hint" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M7 10l5 5 5-5"/>
+      </svg>
+      <span>desplaza</span>
+    </div>
+
+  </header>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       CONTENIDO PRINCIPAL
+       ══════════════════════════════════════════════════════ -->
+  <main id="contenido-principal">
+
+    <!-- ── Introducción ── -->
+    <section class="section section--alt">
+      <div class="container container--text">
+        <div class="article-body reveal">
+          <p>
+            Las leyes que producen los Concejos Municipales en Bolivia son una representación institucional de las decisiones políticas locales, además de instrumentos para gestionar el territorio. Con la reciente posesión de nuevas autoridades, desde Ciudatos Lab consideramos necesario mirar hacia atrás y evaluar el trabajo de los Concejos salientes de nuestras principales ciudades.
+          </p>
+          <p>
+            ¿Qué temas priorizaron los Concejos salientes en su producción normativa? ¿Qué refleja el contenido y sentido de esas normas? ¿Qué problemas tienen que solucionar nuestros municipios y qué recomendaciones se pueden dar a las nuevas autoridades?
+          </p>
+          <p>
+            Tratamos de responder estas preguntas mediante el análisis de una base de datos de <strong>1.527 leyes municipales</strong> aprobadas y sancionadas por los Concejos Municipales de La Paz, Cochabamba y Santa Cruz, desde enero de 2021 hasta marzo de 2026. Además, entrevistamos a ciudadanos conocedores e involucrados en la gobernanza municipal para recoger respuestas y perspectivas que ayuden a interpretar los datos.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         SECCIÓN 01 — La producción normativa
+         ══════════════════════════════════════════════════════ -->
+    <section class="section">
+      <div class="container container--text">
+        <div class="article-body">
+          <h2>La producción de leyes en tres municipios</h2>
+          <p>
+            Partamos por lo básico: ¿cuántas normas se produjeron en cada municipio? ¿Qué podría explicar las diferencias numéricas?
+          </p>
+        </div>
+      </div>
+
+      <div class="container container--wide">
+        <div class="chart-card reveal" style="margin-top:var(--space-6)">
+          <div class="chart-card__header">
+            <div class="chart-card__eyebrow">Cantidad de leyes aprobadas por ciudad</div>
+            <p class="chart-card__subtitle">Total de leyes aprobadas entre 2021 y marzo de 2026.</p>
+          </div>
+          <div class="chart-card__body">
+            <div id="chart-leyes-ciudad"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="container container--text" style="margin-top:var(--space-8)">
+        <div class="article-body">
+          <p>
+            Un primer elemento es que la aprobación de normas en Cochabamba fue masiva en comparación con las otras ciudades: <strong>945 leyes aprobadas</strong> en el periodo analizado. Esto puede deberse a que el partido de Reyes Villa dentro del Concejo contó con una mayoría absoluta, que actuó como un "rodillo" para aprobar muchas normas. Este alto número de leyes, sin embargo, no significa necesariamente que estas hayan sido profundas o bien pensadas para resolver los problemas locales.
+          </p>
+          <p>
+            En segundo lugar está <strong>Santa Cruz de la Sierra</strong>, con 460 leyes aprobadas. Es un número considerable de normas, pese a que el alcalde saliente no contaba con un número tan alto de concejales y tenía una oposición fuerte dentro del Concejo. Como veremos más adelante, la gran mayoría de leyes municipales aprobadas en Santa Cruz no tiene que ver con temas relevantes para el gobierno de la ciudad, sino con efemérides y reconocimientos.
+          </p>
+          <p>
+            Por último, está <strong>La Paz</strong>, donde la producción normativa en cinco años fue mínima en comparación con las otras dos ciudades. Durante la gestión pasada, La Paz aprobó 121 leyes municipales nuevas, lo que equivale aproximadamente al 10% de las normas elaboradas en Cochabamba. Esta baja producción normativa puede tener que ver con varios elementos, entre ellos, la ausencia de un programa edil claro, la baja gobernabilidad y la fragmentación política en el Concejo paceño.
+          </p>
+        </div>
+
+        <div class="article-body" style="margin-top:var(--space-6)">
+          <h2 style="font-size:clamp(1.4rem,3vw,2rem) !important">La producción de leyes en el tiempo</h2>
+          <p>
+            Al observar la producción de normas en el tiempo, vemos que existen determinados meses y coyunturas donde hay picos de producción normativa por parte de los Concejos Municipales.
+          </p>
+        </div>
+      </div>
+
+      <div class="container container--wide">
+        <div class="chart-card reveal">
+          <div class="chart-card__header">
+            <div class="chart-card__eyebrow">Leyes aprobadas por mes · 2021–2026</div>
+            <p class="chart-card__subtitle">
+              Pasa el cursor sobre el gráfico para ver los valores por mes.
+            </p>
+          </div>
+          <div class="chart-card__body" style="overflow-x:auto;">
+            <div id="chart-timeline"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="container container--text" style="margin-top:var(--space-8)">
+        <div class="article-body">
+          <p>
+            El caso más evidente es <strong>Santa Cruz de la Sierra</strong>, que registró un pico de emisión de leyes prácticamente cada febrero y septiembre. En esos meses se conmemoran la fundación y el aniversario de la ciudad, respectivamente, y es el momento en el que el Concejo cruceño ha emitido más normas de reconocimiento a ciudadanos e instituciones destacadas.
+          </p>
+          <p>
+            Por otra parte, <strong>Cochabamba</strong> tiene picos de emisión de leyes alrededor de marzo y diciembre en distintos años, meses en los que normalmente se realizan ajustes a los presupuestos municipales y se da inicio a un nuevo año fiscal. Pese a las críticas que se puedan realizar a la gestión anterior, Cochabamba es uno de los municipios con mayor ejecución presupuestaria del país, y nuestro análisis parece confirmar la capacidad del gobierno de Reyes Villa para ejecutar los presupuestos locales.
+          </p>
+          <p>
+            Mientras tanto, en el caso de <strong>La Paz</strong> casi no se registran temporadas altas, con un promedio mensual muy por debajo de las exigencias de la ciudad. Un pico excepcional se dio en julio de 2024, cuando se aprobaron 10 normas, en su mayoría festivas y patrimoniales, para conmemorar el 16 de julio.
+          </p>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ══════════════════════════════════════════════════════
+         SECCIÓN 02 — Los temas
+         ══════════════════════════════════════════════════════ -->
+    <section class="section section--alt">
+      <div class="container container--text">
+        <div class="article-body">
+          <h2>¿Qué temas fueron más priorizados en cada ciudad?</h2>
+          <p>
+            En el siguiente gráfico se pueden ver los temas prioritarios para los tres Concejos Municipales. Esta aproximación nos sirve para observar las agendas políticas promovidas desde los Concejos en el periodo anterior.
+          </p>
+        </div>
+      </div>
+
+      <div class="container container--wide">
+        <div class="chart-card reveal">
+          <div class="chart-card__header">
+            <div class="chart-card__eyebrow">Temas más priorizados · las tres ciudades</div>
+            <p class="chart-card__subtitle">Porcentaje del total de 1.527 leyes aprobadas.</p>
+          </div>
+          <div class="chart-card__body">
+            <div id="chart-temas-general"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="container container--text" style="margin-top:var(--space-8)">
+        <div class="article-body">
+          <p>
+            A primera vista, notamos que la <strong>administración pública</strong> (26%) —aquellas normas que hacen referencia a presupuestos o modificaciones al marco normativo—, junto con los impuestos (3,9%), aparece entre los cinco temas más priorizados por los tres Concejos Municipales. Estos datos coinciden con un informe reciente del SEA, donde se establece que, en la mayoría de los municipios de Bolivia, las normas administrativas ocupan un 42% del total.
+          </p>
+          <p>
+            Dejando de lado estas categorías administrativas, en el top cinco también tenemos normas dedicadas al <strong>suelo y la vivienda</strong> (31%), reconocimientos a ciudadanos y organizaciones de la sociedad (17,5%) y leyes para la protección del patrimonio, la cultura y el turismo locales (7,6%).
+          </p>
+
+          <blockquote class="pullquote" style="margin-top:var(--space-6)">
+            <p class="pullquote__text">"Decir cuántas normas se han aprobado no nos está diciendo de qué extensión, de qué calidad, qué disponen."</p>
+            <cite class="pullquote__attribution">— Esteban Morales, experto en gobernanza municipal</cite>
+          </blockquote>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ══════════════════════════════════════════════════════
+         SECCIÓN 03 — La Paz
+         ══════════════════════════════════════════════════════ -->
+    <section class="section">
+      <div class="container container--text">
+        <div class="article-body">
+          <h2>Las normas en La Paz: terrenos en laderas, emergencias y patrimonio cultural</h2>
+          <p>
+            Si dejamos de lado los temas administrativos e impositivos, en el Concejo Municipal de La Paz la agenda de políticas municipales giró alrededor del <strong>suelo y la vivienda</strong> (28,8%), el <strong>patrimonio</strong> (23,1%) y la <strong>gestión de riesgos</strong> (5%).
+          </p>
+          <p>
+            En temas de suelo y vivienda fueron muy frecuentes las normas dedicadas a la reversión de suelo en favor de organizaciones de la sociedad (40 leyes), particularmente en zonas en proceso de urbanización. Del lado del patrimonio, las declaraciones de patrimonio tangible e intangible fueron las más comunes.
+          </p>
+        </div>
+      </div>
+
+      <div class="container container--wide">
+        <div class="chart-card reveal">
+          <div class="chart-card__header">
+            <div class="chart-card__eyebrow">La Paz · Subtemas</div>
+            <p class="chart-card__subtitle">Principales subtemas de las leyes aprobadas en La Paz, excluyendo normas administrativas y tributarias.</p>
+          </div>
+          <div class="chart-card__body">
+            <div id="chart-subtemas-lp"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="container container--text" style="margin-top:var(--space-8)">
+        <div class="article-body">
+          <p>
+            ¿Pero hacia qué zonas o distritos se destinaron más leyes en la ciudad de La Paz? En el siguiente mapa se puede ver que varias de esas normas, en particular aquellas dedicadas a la gestión de riesgos, se concentran en zonas específicas del macrodistrito Cotahuma. Las leyes de gestión de riesgos se concentran en áreas como Kantutani, Bajo Llojeta y Alto Tacagua, donde ocurren deslizamientos de manera recurrente durante la temporada de lluvias.
+          </p>
+          <p>
+            Las leyes del Concejo aparecen así como una respuesta ante la emergencia y para atender a los damnificados. Sin embargo, en el cuerpo normativo no encontramos leyes con carácter preventivo y de planificación que busquen evitar estos desastres a futuro.
+          </p>
+
+          <blockquote class="pullquote" style="margin:var(--space-6) 0">
+            <p class="pullquote__text">"En los últimos cinco años todo eso se ha diluido. La gestión ha sacado leyes sobre la marcha, sobre la emergencia que surgía."</p>
+            <cite class="pullquote__attribution">— Fuente anónima, ex funcionaria del municipio de La Paz</cite>
+          </blockquote>
+
+          <p>
+            En el mapa también podemos ver normas dedicadas al suelo y la vivienda que, por lo general, se ubican hacia los límites de la mancha urbana de la ciudad, con el fin de consolidar determinadas urbanizaciones y regularizar terrenos. Asimismo, hay varias normas destinadas al centro paceño, en su mayoría orientadas a la preservación de patrimonio.
+          </p>
+        </div>
+      </div>
+
+      <div class="container container--wide">
+        <div class="chart-card reveal">
+          <div class="chart-card__header">
+            <div class="chart-card__eyebrow">Distribución geográfica de leyes · La Paz</div>
+            <p class="chart-card__subtitle">Cada punto es una ley georreferenciada. El color indica el tema. Pasa el cursor para ver el detalle.</p>
+          </div>
+          <div class="chart-card__body">
+            <div id="map-lp"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ══════════════════════════════════════════════════════
+         SECCIÓN 04 — Cochabamba
+         ══════════════════════════════════════════════════════ -->
+    <section class="section section--alt">
+      <div class="container container--text">
+        <div class="article-body">
+          <h2>Cochabamba y la consolidación de barrios alejados</h2>
+          <p>
+            Como vimos, Cochabamba fue la ciudad con mayor producción normativa de las tres ciudades analizadas. De las 945 normas aprobadas durante el periodo analizado, el <strong>50% está relacionado con el suelo y la vivienda</strong>, el 7,5% con el patrimonio y el 4,6% con la seguridad ciudadana.
+          </p>
+          <p>
+            Llama la atención que temas urgentes como la <strong>gestión de residuos</strong>, que durante los años analizados registró crisis y conflictos muy grandes, apenas representen el 1,2% del cuerpo normativo producido. La mayoría de esas normas está relacionada con concesiones a privados para gestionar el problema y con declaratorias de emergencia.
+          </p>
+          <p>
+            En el caso del transporte y el comercio, las leyes aprobadas reflejan claramente las agendas e intereses sectoriales de las asociaciones de transportistas y gremiales. Por ejemplo, la polémica Ley 1575/2024, que incrementó las tarifas de los pasajes de transporte público, fue aprobada la noche de Año Nuevo de 2024, desatando protestas de organizaciones de vecinos.
+          </p>
+        </div>
+      </div>
+
+      <div class="container container--wide">
+        <div class="chart-card reveal">
+          <div class="chart-card__header">
+            <div class="chart-card__eyebrow">Cochabamba · Subtemas</div>
+            <p class="chart-card__subtitle">Principales subtemas de las leyes aprobadas en Cochabamba.</p>
+          </div>
+          <div class="chart-card__body">
+            <div id="chart-subtemas-cbba"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="container container--text" style="margin-top:var(--space-8)">
+        <div class="article-body">
+          <p>
+            Lo que muestra el mapa de leyes en Cochabamba es muy llamativo: existe una enorme cantidad de normas concentradas en los <strong>márgenes de la ciudad</strong>, en barrios que se encuentran en proceso de expansión. La gran mayoría de estas leyes son declaraciones de propiedad de la alcaldía para otorgar áreas verdes, parques o sedes vecinales a distintos barrios. De hecho, la gran mayoría de normas de equipamiento son prácticamente iguales y solo cambian los polígonos de aplicación.
+          </p>
+
+          <blockquote class="pullquote" style="margin:var(--space-6) 0">
+            <p class="pullquote__text">Registrar la propiedad municipal "era una tarea que había que hacerla", pero eso no convierte automáticamente al Concejo en un órgano legislativo eficaz. Muchas de estas leyes son "la repetición sistemática de la misma ley en diferentes lugares".</p>
+            <cite class="pullquote__attribution">— Esteban Morales</cite>
+          </blockquote>
+
+          <p>
+            Aquí tenemos dos lecturas posibles: o la alcaldía carece de un plan para gestionar la expansión urbana y se limita a reconocer y satisfacer las necesidades de los vecinos que acceden al suelo mediante un mercado desregulado; o, por el contrario, en estos últimos años la alcaldía ha comenzado a sentar presencia en barrios donde antes no tenía autoridad legal para intervenir. Nuestro equipo encontró que la masiva declaración de propiedad de suelos para la alcaldía también se ha realizado en territorios fuera de la jurisdicción del municipio, e incluso en zonas por encima de la cota 2700, que protege al Parque Nacional Tunari.
+          </p>
+        </div>
+      </div>
+
+      <div class="container container--wide">
+        <div class="chart-card reveal">
+          <div class="chart-card__header">
+            <div class="chart-card__eyebrow">Distribución geográfica de leyes · Cochabamba</div>
+            <p class="chart-card__subtitle">Cada punto es una ley georreferenciada. El color indica el tema. Pasa el cursor para ver el detalle.</p>
+          </div>
+          <div class="chart-card__body">
+            <div id="map-cbba"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ══════════════════════════════════════════════════════
+         SECCIÓN 05 — Santa Cruz
+         ══════════════════════════════════════════════════════ -->
+    <section class="section">
+      <div class="container container--text">
+        <div class="article-body">
+          <h2>Santa Cruz: reconocimientos cívicos y una agenda urbana pendiente</h2>
+          <p>
+            Como adelantamos, en Santa Cruz el tema más importante para el Concejo saliente fue el <strong>reconocimiento a ciudadanos u organizaciones cruceñas destacadas</strong>, que representa el 54,9% de todas las leyes aprobadas y promulgadas en ese municipio durante la gestión anterior. Los otros temas, como suelo y vivienda (8,7%), patrimonio (3,7%), transporte (1,5%) y medio ambiente (1%), aparecen en menor grado.
+          </p>
+
+          <blockquote class="pullquote" style="margin:var(--space-5) 0">
+            <p class="pullquote__text">"La proporción me da vergüenza."</p>
+            <cite class="pullquote__attribution">— José Antonio Prado, al observar que más del 50% de las leyes cruceñas son reconocimientos cívicos</cite>
+          </blockquote>
+
+          <p>
+            Para José Antonio Prado, la magnitud de los reconocimientos es una señal de prioridades trastocadas: el Concejo cruceño dedicó más energía a los actos cívicos que a deliberar sobre problemas estructurales. Fuera de los reconocimientos otorgados por el Concejo Municipal, la falta de una agenda edil clara se refleja en muchos temas importantes para la ciudad.
+          </p>
+        </div>
+      </div>
+
+      <div class="container container--wide">
+        <div class="chart-card reveal">
+          <div class="chart-card__header">
+            <div class="chart-card__eyebrow">Santa Cruz · Subtemas</div>
+            <p class="chart-card__subtitle">Principales subtemas de las leyes aprobadas en Santa Cruz.</p>
+          </div>
+          <div class="chart-card__body">
+            <div id="chart-subtemas-sc"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="container container--text" style="margin-top:var(--space-8)">
+        <div class="article-body">
+          <p>
+            La distribución espacial de las leyes muestra una fuerte concentración en el área central de la ciudad, especialmente en torno a los anillos interiores, donde se ubican leyes que reconocen a ciudadanos y protegen el patrimonio cruceño. Mientras tanto, las leyes de suelo y vivienda se dispersan hacia los anillos exteriores y zonas de expansión periurbana.
+          </p>
+        </div>
+      </div>
+
+      <div class="container container--wide">
+        <div class="chart-card reveal">
+          <div class="chart-card__header">
+            <div class="chart-card__eyebrow">Distribución geográfica de leyes · Santa Cruz</div>
+            <p class="chart-card__subtitle">Cada punto es una ley georreferenciada. El color indica el tema. Pasa el cursor para ver el detalle.</p>
+          </div>
+          <div class="chart-card__body">
+            <div id="map-sc"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ══════════════════════════════════════════════════════
+         CONCLUSIONES
+         ══════════════════════════════════════════════════════ -->
+    <section class="section section--alt">
+      <div class="container container--text">
+        <div class="article-body">
+          <h2>¿Qué temas son prioritarios y qué debería trabajar la nueva gestión?</h2>
+          <p>
+            El análisis comparado de las leyes municipales aprobadas por los Concejos salientes permite sostener una primera conclusión general: <strong>la producción normativa no siempre equivale a gestión urbana efectiva</strong>. Cochabamba produjo muchas leyes, La Paz produjo pocas y Santa Cruz produjo una cantidad intermedia, pero en los tres casos aparece una misma pregunta de fondo: ¿las normas están ayudando a gobernar mejor la ciudad o solo registran, administran y celebran hechos que ocurren por fuera de una planificación estratégica?
+          </p>
+          <p>
+            En <strong>La Paz</strong>, los datos muestran una legislación escasa y predominantemente reactiva. Las normas sobre riesgos aparecen asociadas a zonas donde ya ocurrieron deslizamientos o emergencias, pero no se observa una agenda normativa robusta de prevención, monitoreo territorial o planificación de largo plazo. Ese comportamiento es preocupante en una ciudad donde la presión sobre laderas, ríos y suelos inestables exige una gestión basada en información territorial fina y actualizada.
+          </p>
+          <p>
+            En <strong>Cochabamba</strong>, en cambio, la gran cantidad de normas muestra un gobierno municipal con capacidad de ejecución y con mayoría política en el Concejo, pero también revela los límites de una gobernabilidad basada en atender demandas sectoriales y territoriales dispersas. Cuando esas normas se aprueban de manera repetitiva, en áreas periféricas o incluso por encima de la cota ambiental del Tunari, la pregunta deja de ser solo administrativa y se vuelve política: ¿se está ordenando la expansión urbana o se la está legalizando después de que ya ocurrió?
+          </p>
+          <p>
+            En <strong>Santa Cruz</strong>, el predominio de reconocimientos a ciudadanos y organizaciones muestra un Concejo que dedicó una parte desproporcionada de su producción normativa a actos simbólicos. El problema no es reconocer trayectorias locales, sino que esa agenda haya desplazado temas estratégicos para una ciudad marcada por deudas, expansión periférica, conflictos por el suelo, crisis ambiental, movilidad y gestión de residuos.
+          </p>
+        </div>
+
+        <div class="article-body" style="margin-top:var(--space-8)">
+          <h2 style="font-size:clamp(1.4rem,3vw,2rem) !important">Tres prioridades para la nueva gestión</h2>
+          <p>
+            <strong>Primera:</strong> mejores canales de acceso a la normativa. Las gacetas municipales no pueden seguir funcionando como repositorios difíciles de consultar, con buscadores débiles y PDFs dispersos. La ciudadanía necesita normas accesibles, descargables, buscables y comprensibles.
+          </p>
+          <p>
+            <strong>Segunda:</strong> abrir la discusión sobre competencias municipales. Los Concejos deberían revisar qué han legislado respecto de sus competencias exclusivas, compartidas y concurrentes, y cuáles han quedado relegadas.
+          </p>
+          <p>
+            <strong>Tercera:</strong> pasar de gobiernos reactivos a gobiernos que planifiquen con datos. Sin indicadores, las leyes se vuelven declaraciones sin seguimiento; sin seguimiento, la ciudad se administra a ciegas. La producción normativa debería incorporar metas, plazos, mecanismos de evaluación y evidencia territorial.
+          </p>
+
+          <blockquote class="pullquote" style="margin-top:var(--space-6)">
+            <p class="pullquote__text">"Ninguna de estas leyes tiene indicadores que te digan cuánto va cambiando y qué cosas tienes que modificar en el tiempo."</p>
+            <cite class="pullquote__attribution">— Fuente anónima, ex funcionaria del municipio de La Paz</cite>
+          </blockquote>
+
+          <p style="margin-top:var(--space-5)">
+            En suma, la tarea de las nuevas autoridades no es producir más leyes por producirlas, sino producir <strong>mejores leyes</strong>: normas accesibles, alineadas con competencias, basadas en evidencia, conectadas con una visión de ciudad y evaluadas en el tiempo. Solo así la legislación municipal podrá dejar de ser un registro de emergencias, reconocimientos o regularizaciones tardías, y convertirse en una herramienta real para gobernar mejor nuestras ciudades.
+          </p>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ── Metodología ── -->
+    <section class="section">
+      <div class="container container--text">
+        <div class="article-body">
+          <h2 style="font-size:var(--text-2xl); margin-bottom:var(--space-4);">Datos y metodología</h2>
+          <div class="callout">
+            <p>
+              Para conformar la base de datos, realizamos un <em>scraping</em> a las gacetas municipales de La Paz, Cochabamba y Santa Cruz, obteniendo un total de 1.527 leyes aprobadas y sancionadas entre enero de 2021 y marzo de 2026. Posteriormente, el equipo de Ciudatos Lab realizó un etiquetado manual para identificar los temas, subtemas y la ubicación geográfica de cada ley municipal, cuando correspondía. La base de datos está abierta.
+            </p>
+            <p style="margin-top:var(--space-3);">
+              Las visualizaciones fueron elaboradas con D3.js v7. Los mapas muestran únicamente las leyes que contaban con referencia geográfica identificable (539 de 1.527).
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       CRÉDITOS
+       ══════════════════════════════════════════════════════ -->
+  <section style="background:#30303D; padding: var(--space-12) 0; text-align:center;">
+    <div class="container container--text">
+      <p style="font-family:var(--font-sans); font-size:var(--text-sm); color:rgba(244,244,244,0.9); line-height:2; margin-bottom:var(--space-4);">
+        <strong style="color:#F4F4F4;">Entrevistas:</strong>
+        <span style="color:rgba(244,244,244,0.6);">Fuente anónima (La Paz) · Esteban Morales · José Antonio Prado</span><br>
+        <strong style="color:#F4F4F4;">Autoría y recolección de datos:</strong>
+        <span style="color:rgba(244,244,244,0.6);">
+          Jocabet Alí, Edson Arteaga, Diego Bustamante, Silvana Cachi, Xisel Canaviri, Alexandra Crespo, Pablo Gómez, Darling Hurtado, Teresa Mamani, Thamy Montecinos, Jhoana Paula, Valeria Peredo, Claudia Rojas, Silvia Vasquez, Jimena Villca
+        </span><br>
+        <strong style="color:#F4F4F4;">Coordinación:</strong>
+        <span style="color:rgba(244,244,244,0.6);">Valeria Peredo</span>
+      </p>
+
+      <div style="margin-top:var(--space-8); display:flex; align-items:center; justify-content:center;">
+        <span style="font-family:var(--font-sans); font-size:0.72rem; color:rgba(244,244,244,0.35); letter-spacing:0.15em; text-transform:uppercase;">Ciudatos Lab · 2026</span>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- D3.js v7 desde CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <!-- Leaflet para mapas con fondo cartográfico -->
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9/dist/leaflet.js"></script>
+
+  <!-- Visualizaciones del artículo -->
+  <script type="module" src="js/leyes-main.js"></script>
+
+</body>
+
+</html>

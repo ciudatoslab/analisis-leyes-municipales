@@ -1,0 +1,23 @@
+{
+  "name": "articulo-trufiapp",
+  "version": "1.0.0",
+  "config": {
+    "buildDir": "movilidad-trufiapp2025"
+  },
+  "scripts": {
+    "build": "sh scripts/build.sh",
+    "deploy": "sh scripts/deploy.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lab-tecnosocial/articulo-trufiapp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lab-tecnosocial/articulo-trufiapp/issues"
+  },
+  "homepage": "https://github.com/lab-tecnosocial/articulo-trufiapp#readme",
+  "description": ""
+}
