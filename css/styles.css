@@ -13,7 +13,6 @@
   /* Tipografía */
   --font-serif:   'Source Serif 4', Georgia, serif;
   --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono:    'JetBrains Mono', 'Courier New', monospace;
 
   /* Escala tipográfica (base 16px) */
   --text-xs:   0.75rem;
@@ -56,8 +55,6 @@
   --data-4: #f59e0b;
   --data-5: #8b5cf6;
   --data-6: #06b6d4;
-  --data-7: #f97316;
-  --data-8: #64748b;
 
   /* Espaciado */
   --space-1:  0.25rem;
@@ -390,8 +387,6 @@ h1, h2, h3, h4, h5, h6 {
   opacity: 1;
   transform: translateY(0);
 }
-
-.reveal--delay-1 { transition-delay: 0.1s; }
 
 /* Progress bar de lectura */
 .reading-progress {

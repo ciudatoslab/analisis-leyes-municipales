@@ -1,6 +1,6 @@
 'use strict';
 
-import { initReadingProgress, onVisible, onVisibleOnce, animateCounter, createTooltip } from './utils.js';
+import { initReadingProgress, onVisible, onVisibleOnce, createTooltip } from './utils.js';
 
 // ── Paleta ────────────────────────────────────────────────────
 const C = {
@@ -82,17 +82,6 @@ function buildSubtemasHierarchy(csv, city, excludeTemas = [], maxTemas = 8, maxS
     .slice(0, maxTemas);
 
   return { name: 'root', children };
-}
-
-function initCounters() {
-  document.querySelectorAll('[data-counter]').forEach(el => {
-    const target   = parseFloat(el.dataset.counter);
-    const duration = parseInt(el.dataset.counterDuration || '1500', 10);
-    const decimals = parseInt(el.dataset.counterDecimals || '0', 10);
-    const suffix   = el.dataset.counterSuffix || '';
-    const fmt = v => (decimals > 0 ? v.toFixed(decimals) : Math.floor(v).toLocaleString('es')) + suffix;
-    onVisibleOnce(el, () => animateCounter(el, target, duration, fmt), { threshold: 0.5 });
-  });
 }
 
 
@@ -265,7 +254,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   initReadingProgress();
   onVisible('.reveal', null, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
   initHeroStamp();
-  initCounters();
 
   const [csv, geo, distLp, distCbba, distSc] = await Promise.all([
     d3.csv('data/leyes_limpias.csv'),
@@ -278,6 +266,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   initBarCiudad(csv);
   initTimeline(csv);
   initTemasGeneral(csv);
+  initTemasBarCity('chart-temas-lp',   csv, 'La Paz',     C.lp);
+  initTemasBarCity('chart-temas-cbba', csv, 'Cochabamba', C.cbba);
+  initTemasBarCity('chart-temas-sc',   csv, 'Santa Cruz',  C.sc);
   initSubtemasHierarchy('chart-subtemas-lp',   csv, 'La Paz',     ['administracion publica', 'impuestos']);
   initSubtemasHierarchy('chart-subtemas-cbba', csv, 'Cochabamba', []);
   initSubtemasHierarchy('chart-subtemas-sc',   csv, 'Santa Cruz', []);
@@ -615,10 +606,6 @@ function initTemasGeneral(csv) {
           return d.label.length > maxCh ? d.label.slice(0, maxCh - 1) + '…' : d.label;
         });
 
-      rows.append('rect')
-        .attr('x', 0).attr('y', labelH + 6).attr('width', w).attr('height', barH).attr('rx', barH / 2)
-        .attr('fill', C.border);
-
       const bars = rows.append('rect')
         .attr('x', 0).attr('y', labelH + 6).attr('height', barH).attr('rx', barH / 2)
         .attr('width', isFirst ? 0 : d => x(d.value))
@@ -673,9 +660,6 @@ function initTemasGeneral(csv) {
       .style('font-size', '12px').style('fill', C.text)
       .text(d => d.label.length > 44 ? d.label.slice(0, 44) + '…' : d.label);
 
-    rows.append('rect').attr('x', 0).attr('y', (bh - barH) / 2).attr('width', w).attr('height', barH).attr('rx', barH / 2)
-      .attr('fill', C.border);
-
     const bars = rows.append('rect')
       .attr('x', 0).attr('y', (bh - barH) / 2).attr('height', barH).attr('rx', barH / 2)
       .attr('width', isFirst ? 0 : d => x(d.value))
@@ -698,6 +682,163 @@ function initTemasGeneral(csv) {
           .attr('width', d => x(d.value));
         pcts.transition().duration(400).delay((_, i) => i * 48 + 720)
           .attr('x', d => x(d.value)).style('opacity', 1);
+      }, { threshold: 0.2 });
+    }
+  });
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// TEMAS POR CIUDAD — Horizontal bar chart
+// ═══════════════════════════════════════════════════════════════
+
+function initTemasBarCity(containerId, csv, city, cityColor) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+
+  const cityRows = csv.filter(r => r.ciudad === city);
+  const total    = cityRows.length;
+  const counts   = new Map();
+  cityRows.forEach(r => {
+    const t = (r.tema || '').trim();
+    if (t) counts.set(t, (counts.get(t) || 0) + 1);
+  });
+
+  const data   = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([label, value]) => ({ label, value, pct: value / total * 100 }));
+  const maxPct = d3.max(data, d => d.pct);
+
+  responsiveChart(el, (totalW, isMobile, isFirst) => {
+    const onHover = (event, d) => tip.show(
+      `<strong>${d.label}</strong><br>${fmtN(d.value)} leyes · ${d.pct.toFixed(1)}%`,
+      event.clientX, event.clientY
+    );
+
+    // ── MOBILE ───────────────────────────────────────────────
+    if (isMobile) {
+      const rowH   = 52;
+      const padX   = 4;
+      const barH   = 15;
+      const labelH = 18;
+      const pctW   = 56;
+      const w      = totalW - padX * 2 - pctW;
+      const axisH  = 22;
+      const totalH = data.length * rowH + 6 + axisH;
+
+      const x = d3.scaleLinear().domain([0, maxPct * 1.2]).range([0, w]);
+
+      const svg = d3.select(el).append('svg')
+        .attr('width', '100%').attr('height', totalH)
+        .attr('viewBox', `0 0 ${totalW} ${totalH}`)
+        .attr('preserveAspectRatio', 'xMidYMid meet');
+
+      const rows = svg.selectAll('.tema-row').data(data).enter().append('g')
+        .attr('class', 'tema-row')
+        .attr('transform', (_, i) => `translate(${padX},${6 + i * rowH})`);
+
+      rows.append('text')
+        .attr('x', 0).attr('y', labelH / 2).attr('dy', '0.35em')
+        .style('font-size', '12px').style('font-weight', '500').style('fill', C.text)
+        .text(d => {
+          const maxCh = Math.floor(w / 6.8);
+          return d.label.length > maxCh ? d.label.slice(0, maxCh - 1) + '…' : d.label;
+        });
+
+      const bars = rows.append('rect')
+        .attr('x', 0).attr('y', labelH + 4).attr('height', barH).attr('rx', 3)
+        .attr('width', isFirst ? 0 : d => x(d.pct))
+        .attr('fill', cityColor).attr('opacity', 0.85)
+        .style('cursor', 'pointer')
+        .on('mouseover', onHover)
+        .on('mousemove', e => tip.move(e.clientX, e.clientY))
+        .on('mouseout', () => tip.hide());
+
+      const pcts = rows.append('text')
+        .attr('x', isFirst ? 2 : d => x(d.pct) + 5)
+        .attr('y', labelH + 4 + barH / 2).attr('dy', '0.35em')
+        .style('font-size', '11px').style('font-weight', '700')
+        .style('fill', cityColor).style('opacity', isFirst ? 0 : 1)
+        .text(d => `${d.pct.toFixed(1)}%`);
+
+      if (isFirst) {
+        onVisibleOnce(el, () => {
+          bars.transition().duration(900).delay((_, i) => i * 45).ease(d3.easeCubicOut)
+            .attr('width', d => x(d.pct));
+          pcts.transition().duration(400).delay((_, i) => i * 45 + 720)
+            .attr('x', d => x(d.pct) + 5).style('opacity', 1);
+        }, { threshold: 0.2 });
+      }
+      return;
+    }
+
+    // ── DESKTOP ───────────────────────────────────────────────
+    const labelW = Math.min(Math.max(totalW * 0.38, 200), 320);
+    const margin = { top: 16, right: 68, bottom: 28, left: labelW };
+    const rowH   = 36;
+    const barH   = 14;
+    const chartH = data.length * rowH;
+    const totalH = chartH + margin.top + margin.bottom;
+    const w      = totalW - margin.left - margin.right;
+
+    const svg = d3.select(el).append('svg')
+      .attr('width', '100%').attr('height', totalH)
+      .attr('viewBox', `0 0 ${totalW} ${totalH}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet');
+
+    const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+    const x = d3.scaleLinear().domain([0, maxPct * 1.18]).range([0, w]);
+    const y = d3.scaleBand().domain(data.map((_, i) => i))
+      .range([0, chartH]).padding(0.26);
+    const bh = y.bandwidth();
+
+    // Grid lines
+    x.ticks(5).forEach(tick => {
+      g.append('line')
+        .attr('x1', x(tick)).attr('y1', 0).attr('x2', x(tick)).attr('y2', chartH)
+        .attr('stroke', C.border).attr('stroke-dasharray', '3,3').attr('opacity', 0.6);
+    });
+
+    // X axis
+    g.append('g')
+      .attr('transform', `translate(0,${chartH})`)
+      .call(d3.axisBottom(x).ticks(5).tickFormat(d => `${d % 1 === 0 ? d : d.toFixed(1)}%`).tickSize(4))
+      .call(gr => {
+        gr.select('.domain').remove();
+        gr.selectAll('.tick line').attr('stroke', C.border);
+        gr.selectAll('.tick text').style('fill', C.muted).style('font-size', '10px');
+      });
+
+    const rows = g.selectAll('.tema-row').data(data).enter().append('g')
+      .attr('class', 'tema-row').attr('transform', (_, i) => `translate(0,${y(i)})`);
+
+    rows.append('text')
+      .attr('x', -8).attr('y', bh / 2).attr('dy', '0.35em').attr('text-anchor', 'end')
+      .style('font-size', '12px').style('fill', C.text)
+      .text(d => d.label.length > 42 ? d.label.slice(0, 42) + '…' : d.label);
+
+    const bars = rows.append('rect')
+      .attr('x', 0).attr('y', (bh - barH) / 2).attr('height', barH).attr('rx', 3)
+      .attr('width', isFirst ? 0 : d => x(d.pct))
+      .attr('fill', cityColor).attr('opacity', 0.85)
+      .style('cursor', 'pointer')
+      .on('mouseover', onHover)
+      .on('mousemove', e => tip.move(e.clientX, e.clientY))
+      .on('mouseout', () => tip.hide());
+
+    const pcts = rows.append('text')
+      .attr('x', isFirst ? 0 : d => x(d.pct))
+      .attr('y', bh / 2).attr('dy', '0.35em').attr('dx', 7)
+      .style('font-size', '11px').style('font-weight', '700')
+      .style('fill', cityColor).style('opacity', isFirst ? 0 : 1)
+      .text(d => `${d.pct.toFixed(1)}%`);
+
+    if (isFirst) {
+      onVisibleOnce(el, () => {
+        bars.transition().duration(900).delay((_, i) => i * 48).ease(d3.easeCubicOut)
+          .attr('width', d => x(d.pct));
+        pcts.transition().duration(400).delay((_, i) => i * 48 + 720)
+          .attr('x', d => x(d.pct)).style('opacity', 1);
       }, { threshold: 0.2 });
     }
   });
@@ -987,10 +1128,11 @@ function initMap(geo, city, containerId) {
   el.style.height = '460px';
 
   // Mapa Leaflet
+  const isTouchPrimary = window.matchMedia('(pointer: coarse)').matches;
   const map = L.map(el, {
     scrollWheelZoom: false,
     touchZoom:       false,   // evita que el pellizco quede atrapado en el mapa en mobile
-    dragging:        !L.Browser.touch, // en touch, desactiva drag para que el dedo scrollee la página
+    dragging:        !isTouchPrimary, // deshabilita drag solo en dispositivos táctiles reales
     zoomControl: true,
     attributionControl: true,
   });
