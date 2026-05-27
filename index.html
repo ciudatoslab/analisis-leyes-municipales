@@ -978,7 +978,7 @@
     <section class="section">
       <div class="container container--text">
         <div class="article-body">
-          <h2 style="font-size:var(--text-2xl); margin-bottom:var(--space-4);">Datos y metodología</h2>
+          <h2 style="font-size:var(--text-2xl); margin-bottom:var(--space-4);">Metodología y datos</h2>
           <div>
             <p>
               Para conformar la base de datos, realizamos un <em>scraping</em> a las gacetas municipales de La Paz, Cochabamba y Santa Cruz, obteniendo un total de 1.527 leyes aprobadas y sancionadas entre enero de 2021 y marzo de 2026. Posteriormente, el equipo de Ciudatos Lab realizó un etiquetado manual para identificar los temas, subtemas y la ubicación geográfica de cada ley municipal, cuando correspondía. La base de datos está abierta.
@@ -986,6 +986,17 @@
             <p style="margin-top:var(--space-3);">
               Las visualizaciones fueron elaboradas con D3.js v7. Los mapas muestran únicamente las leyes que contaban con referencia geográfica identificable.
             </p>
+            <br>
+            <div style="display:flex; flex-wrap:wrap; gap:var(--space-3); margin-top:var(--space-5); justify-content:center;">
+              <a href="https://ciudatoslab.org/datos/leyes-municipales-cochabamba-santa-cruz-la-paz/" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.65rem 1.25rem; background:#1a56db; color:#fff; border-radius:6px; font-size:var(--text-sm); font-weight:600; text-decoration:none; transition:background 0.2s;" onmouseover="this.style.background='#1444b0'" onmouseout="this.style.background='#1a56db'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Descarga los datos en Google Drive
+              </a>
+              <a href="https://github.com/ciudatoslab/analisis-leyes-municipales/tree/master/data" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.65rem 1.25rem; background:#24292F; color:#fff; border-radius:6px; font-size:var(--text-sm); font-weight:600; text-decoration:none; transition:background 0.2s;" onmouseover="this.style.background='#3a3f47'" onmouseout="this.style.background='#24292F'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                Descarga los datos en GitHub
+              </a>
+            </div>
           </div>
         </div>
       </div>
