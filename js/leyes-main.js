@@ -3,45 +3,70 @@
 import { initReadingProgress, onVisible, onVisibleOnce, createTooltip } from './utils.js';
 
 // ── Paleta ────────────────────────────────────────────────────
+// Paleta inspirada en The Pudding (pudding.cool/2020/08/income):
+// neutros carbón/grises + acentos planos teal, naranja, marino, amarillo.
 const C = {
-  lp:     '#B54B68',
-  cbba:   '#3C6BAA',
-  sc:     '#20A47A',
-  gold:   '#F1B62A',
-  purple: '#7368C4',
-  muted:  '#5A5A6A',
-  light:  '#8A8A9A',
-  border: '#D8D8E0',
-  text:   '#30303D',
+  lp:     '#FF8850', // naranja
+  cbba:   '#00A08F', // teal
+  sc:     '#124653', // marino
+  accent: '#008577',
+  muted:  '#5B5B5B',
+  light:  '#828282',
+  border: '#E6E6E6',
+  divider:'#C9C9C9',
+  track:  '#F4F4F4',
+  text:   '#282828',
   card:   '#FFFFFF',
 };
 
 const CITY_COLOR = { 'La Paz': C.lp, 'Cochabamba': C.cbba, 'Santa Cruz': C.sc };
 
 const TEMA_COLOR = {
-  // Colores base de la paleta del artículo
-  'suelo y vivienda':                                        '#F1B62A', // ámbar
-  'administracion publica':                                  '#7368C4', // púrpura
-  'Reconocimiento a ciudadanos u organizaciones destacadas': '#B54B68', // rosa
-  'patrimonio, cultura y turismo':                           '#20A47A', // verde esmeralda
-  'impuestos':                                               '#3C6BAA', // azul
-  // Variaciones tonales — hue distinto o valor claramente diferente
-  'transporte':                                              '#D4762A', // naranja
-  'seguridad':                                               '#5E91C4', // azul claro
-  'medio ambiente':                                          '#2D8A5E', // verde oscuro
-  'salud':                                                   '#C45E7E', // rosa suave
-  'gestión de riesgos':                                      '#7A3A78', // violeta oscuro
-  'gestión de residuos':                                     '#8A7A3A', // ocre
-  'comercio y mercados':                                     '#9A8FD8', // lavanda
-  'niñez y juventud':                                        '#D86080', // coral
-  'educación':                                               '#46B09A', // teal
-  'parques y recreación':                                    '#6AB08A', // sage
+  // Temas principales — acentos de la paleta
+  'suelo y vivienda':                                        '#00A08F', // teal
+  'administracion publica':                                  '#124653', // marino
+  'Reconocimiento a ciudadanos u organizaciones destacadas': '#FF8850', // naranja
+  'patrimonio, cultura y turismo':                           '#F2C14E', // amarillo
+  'impuestos':                                               '#F29595', // rosa
+  // Temas secundarios — variaciones apagadas
+  'transporte':                                              '#5B8A99', // azul pizarra
+  'seguridad':                                               '#3E6E8E', // azul acero
+  'medio ambiente':                                          '#7FB069', // verde hoja
+  'salud':                                                   '#C2577A', // frambuesa
+  'gestión de riesgos':                                      '#A6472B', // terracota
+  'gestión de residuos':                                     '#A89A5B', // oliva
+  'comercio y mercados':                                     '#8E83C2', // lavanda
+  'niñez y juventud':                                        '#E3A3C0', // rosa pálido
+  'educación':                                               '#4FB3C8', // celeste
+  'parques y recreación':                                    '#B3CC7A', // lima
 };
 
 const tip = createTooltip();
 
 // ── Helpers ───────────────────────────────────────────────────
 function fmtN(n) { return new Intl.NumberFormat('es').format(n); }
+
+// Color de texto legible sobre un fondo dado
+function inkOn(fill) {
+  return d3.lab(fill).l > 62 ? C.text : '#FFFFFF';
+}
+
+// Versión oscurecida de un color claro para usarlo como texto sobre blanco
+function inkOf(color) {
+  const l = d3.lab(color).l;
+  return l > 55 ? d3.lab(color).darker((l - 45) / 18).formatHex() : color;
+}
+
+function dot(color) {
+  return `<i class="tt-dot" style="background:${color}"></i>`;
+}
+
+// Estilo común de ejes: sin línea de dominio, etiquetas grises
+function styleAxis(gr, size = 12) {
+  gr.select('.domain').remove();
+  gr.selectAll('.tick line').attr('stroke', C.border);
+  gr.selectAll('.tick text').style('fill', C.light).style('font-size', `${size}px`);
+}
 
 function parseMonth(dateStr) {
   if (!dateStr) return null;
@@ -154,20 +179,21 @@ function initHeroStamp() {
     doc.style.setProperty('--appear-delay', `${docDelay}s`);
     doc.style.setProperty('--float-delay',  `${(docDelay + 0.55).toFixed(2)}s`);
     doc.style.setProperty('--float-dur',    `${(2.5 + (i % 7) * 0.28).toFixed(2)}s`);
+    const sealColor = [C.cbba, C.lp, C.sc][i % 3];
     doc.innerHTML = `
-      <rect width="28" height="36" rx="1.5" fill="rgba(244,238,224,0.94)" stroke="rgba(0,0,0,0.08)" stroke-width="0.4"/>
-      <line x1="3.5" y1="7"    x2="24.5" y2="7"    stroke="rgba(40,40,55,0.46)" stroke-width="0.6"  stroke-linecap="round"/>
-      <line x1="3.5" y1="11.5" x2="22"   y2="11.5" stroke="rgba(40,40,55,0.32)" stroke-width="0.55" stroke-linecap="round"/>
-      <line x1="3.5" y1="16"   x2="24"   y2="16"   stroke="rgba(40,40,55,0.24)" stroke-width="0.55" stroke-linecap="round"/>
-      <line x1="3.5" y1="20.5" x2="20"   y2="20.5" stroke="rgba(40,40,55,0.2)"  stroke-width="0.55" stroke-linecap="round"/>
+      <rect width="28" height="36" rx="1" fill="#FFFFFF" stroke="#C9C9C9" stroke-width="0.6"/>
+      <line x1="3.5" y1="7"    x2="24.5" y2="7"    stroke="rgba(40,40,40,0.5)"  stroke-width="0.6"  stroke-linecap="round"/>
+      <line x1="3.5" y1="11.5" x2="22"   y2="11.5" stroke="rgba(40,40,40,0.3)"  stroke-width="0.55" stroke-linecap="round"/>
+      <line x1="3.5" y1="16"   x2="24"   y2="16"   stroke="rgba(40,40,40,0.22)" stroke-width="0.55" stroke-linecap="round"/>
+      <line x1="3.5" y1="20.5" x2="20"   y2="20.5" stroke="rgba(40,40,40,0.18)" stroke-width="0.55" stroke-linecap="round"/>
       <g transform="translate(17,27)">
         <g class="stamp-seal" style="animation-delay:${sealDelay}s;">
-          <circle r="7"   fill="none" stroke="#B54B68" stroke-width="0.85"/>
-          <circle r="5.4" fill="none" stroke="#B54B68" stroke-width="0.35" stroke-dasharray="0.55 0.8"/>
+          <circle r="7"   fill="none" stroke="${sealColor}" stroke-width="0.85"/>
+          <circle r="5.4" fill="none" stroke="${sealColor}" stroke-width="0.35" stroke-dasharray="0.55 0.8"/>
           <text x="0" y="1.4" text-anchor="middle"
-                font-family="'Inter Tight', sans-serif"
+                font-family="'Libre Franklin', sans-serif"
                 font-size="3.8" font-weight="800"
-                fill="#B54B68" letter-spacing="0.1em">LEY</text>
+                fill="${sealColor}" letter-spacing="0.1em">LEY</text>
         </g>
       </g>
     `;
@@ -318,46 +344,43 @@ function initBarCiudad(csv) {
     const x = d3.scaleBand().domain(data.map(d => d.label)).range([0, w]).padding(0.38);
     const y = d3.scaleLinear().domain([0, d3.max(data, d => d.value) * 1.18]).range([h, 0]);
 
-    g.append('g').call(d3.axisLeft(y).ticks(5).tickSize(-w).tickFormat(''))
+    g.append('g').call(d3.axisLeft(y).ticks(5).tickSize(-w).tickFormat(d => fmtN(d)).tickPadding(10))
       .call(gr => {
-        gr.select('.domain').remove();
-        gr.selectAll('.tick line').attr('stroke', C.border).attr('stroke-dasharray', '4,3').attr('opacity', 0.6);
-      });
-
-    g.append('g').call(d3.axisLeft(y).ticks(5).tickFormat(d => fmtN(d)))
-      .call(gr => {
-        gr.select('.domain').remove();
-        gr.selectAll('.tick text').style('fill', C.muted).style('font-size', isMobile ? '12px' : '12px');
+        styleAxis(gr, 12);
+        gr.selectAll('.tick line').attr('stroke', C.border);
       });
 
     g.append('g').attr('transform', `translate(0,${h})`)
-      .call(d3.axisBottom(x).tickSize(0))
+      .call(d3.axisBottom(x).tickSize(0).tickPadding(12))
       .call(gr => {
-        gr.select('.domain').remove();
-        gr.selectAll('.tick text').style('fill', C.text).style('font-size', isMobile ? '11px' : '15px').style('font-weight', '700');
+        styleAxis(gr);
+        gr.selectAll('.tick text').style('fill', C.text).style('font-size', isMobile ? '12px' : '14px').style('font-weight', '700');
       });
+
+    g.append('line').attr('x1', 0).attr('x2', w).attr('y1', h).attr('y2', h)
+      .attr('stroke', C.text).attr('stroke-width', 1);
 
     const bars = g.selectAll('.bar')
       .data(data).enter().append('rect')
-      .attr('x', d => x(d.label)).attr('width', x.bandwidth()).attr('rx', 5)
+      .attr('x', d => x(d.label)).attr('width', x.bandwidth()).attr('rx', 1)
       .attr('y',      isFirst ? h : d => y(d.value))
       .attr('height', isFirst ? 0 : d => h - y(d.value))
-      .attr('fill', d => d.color).attr('fill-opacity', 0.85)
+      .attr('fill', d => d.color)
       .style('cursor', 'pointer')
       .on('mouseover', (event, d) => {
-        d3.select(event.currentTarget).attr('fill-opacity', 1);
-        tip.show(`<strong>${d.label}</strong><br>${fmtN(d.value)} leyes`, event.clientX, event.clientY);
+        bars.attr('opacity', b => b === d ? 1 : 0.35);
+        tip.show(`<span class="tt-title">${dot(d.color)}${d.label}</span><strong>${fmtN(d.value)}</strong> leyes aprobadas`, event.clientX, event.clientY);
       })
       .on('mousemove', e => tip.move(e.clientX, e.clientY))
-      .on('mouseout', event => { d3.select(event.currentTarget).attr('fill-opacity', 0.85); tip.hide(); });
+      .on('mouseout', () => { bars.attr('opacity', 1); tip.hide(); });
 
     const labels = g.selectAll('.bar-lbl')
       .data(data).enter().append('text')
       .attr('x', d => x(d.label) + x.bandwidth() / 2)
       .attr('y', isFirst ? h : d => y(d.value))
-      .attr('text-anchor', 'middle').attr('dy', '-0.4em')
-      .style('font-size', isMobile ? '18px' : '16px').style('font-weight', '800')
-      .style('fill', d => d.color).style('opacity', isFirst ? 0 : 1)
+      .attr('text-anchor', 'middle').attr('dy', '-0.5em')
+      .style('font-size', isMobile ? '18px' : '20px').style('font-weight', '700')
+      .style('fill', C.text).style('opacity', isFirst ? 0 : 1)
       .text(d => fmtN(d.value));
 
     if (isFirst) {
@@ -445,7 +468,7 @@ function initTimeline(csv) {
       lgd.append('circle').attr('cx', lx + 7).attr('cy', 8).attr('r', 3)
         .attr('fill', CITY_COLOR[city]);
       lgd.append('text').attr('x', lx + 19).attr('y', 8).attr('dy', '0.35em')
-        .style('fill', C.text).style('font-size', isMobile ? '11px' : '12px').text(city);
+        .style('fill', C.text).style('font-size', isMobile ? '12px' : '13px').style('font-weight', '600').text(city);
     });
 
     const xPad   = iW * 0.015;
@@ -465,42 +488,43 @@ function initTimeline(csv) {
       const g  = svg.append('g').attr('transform', `translate(${M.left},${fy + M.top})`);
 
       g.append('line').attr('x1', 0).attr('y1', 0).attr('x2', iW).attr('y2', 0)
-        .attr('stroke', C.border).attr('opacity', 0.45);
+        .attr('stroke', C.border);
 
       g.append('text')
         .attr('x', -M.left + 2).attr('y', 6).attr('dy', '0.35em')
-        .style('font-size', isMobile ? '13px' : '12px').style('font-weight', '700').style('fill', C.muted)
+        .style('font-size', isMobile ? '13px' : '13px').style('font-weight', '700').style('fill', C.text)
         .text(facet.year);
 
       yTicks.forEach(tick => {
         g.append('line')
           .attr('x1', 0).attr('y1', yScale(tick)).attr('x2', iW).attr('y2', yScale(tick))
-          .attr('stroke', C.border).attr('stroke-dasharray', '4,3').attr('opacity', 0.5);
+          .attr('stroke', tick === 0 ? C.divider : C.border);
+        if (tick === 0 || yScale(tick) < 12) return;
         g.append('text')
           .attr('x', -5).attr('y', yScale(tick)).attr('dy', '0.35em').attr('text-anchor', 'end')
-          .style('font-size', isMobile ? '10px' : '9px').style('fill', C.light).text(tick);
+          .style('font-size', isMobile ? '10px' : '10px').style('fill', C.light).text(tick);
       });
 
       MONTHS.forEach((name, mi) => {
         const active = mi < facet.series[0].values.length;
         g.append('text')
           .attr('x', xScale(mi)).attr('y', iH + (isMobile ? 18 : 14)).attr('text-anchor', 'middle')
-          .style('font-size', isMobile ? '11px' : '9.5px')
-          .style('fill', active ? C.muted : C.border)
+          .style('font-size', isMobile ? '11px' : '10px')
+          .style('fill', active ? C.light : C.border)
           .text(name);
       });
 
       if (facet.partial) {
         g.append('text')
           .attr('x', xScale(1)).attr('y', iH / 2 - 6).attr('text-anchor', 'middle')
-          .style('font-size', isMobile ? '11px' : '9px').style('fill', C.light).style('font-style', 'italic')
+          .style('font-size', isMobile ? '11px' : '10px').style('fill', C.light).style('font-style', 'italic')
           .text('Ene – Mar');
       }
 
       facet.series.forEach(s => {
         const path = g.append('path').datum(s.values)
           .attr('fill', 'none').attr('stroke', s.color)
-          .attr('stroke-width', isMobile ? 2.2 : 2).attr('stroke-linecap', 'round')
+          .attr('stroke-width', isMobile ? 2.2 : 2).attr('stroke-linecap', 'round').attr('stroke-linejoin', 'round')
           .attr('d', lineGen);
 
         if (isFirst) {
@@ -511,13 +535,12 @@ function initTimeline(csv) {
 
         g.selectAll(null).data(s.values).enter().append('circle')
           .attr('cx', d => xScale(d.mi)).attr('cy', d => yScale(d.count))
-          .attr('r', isMobile ? 3 : 2.5).attr('fill', s.color)
+          .attr('r', isMobile ? 3 : 2.5).attr('fill', s.color).attr('stroke', '#fff').attr('stroke-width', 0.8)
           .attr('opacity', isFirst ? 0 : 1);
       });
 
       const hoverLine = g.append('line').attr('y1', 0).attr('y2', iH)
-        .attr('stroke', C.muted).attr('stroke-dasharray', '3,2')
-        .attr('stroke-width', 1).attr('opacity', 0).attr('pointer-events', 'none');
+        .attr('stroke', C.text).attr('stroke-width', 1).attr('opacity', 0).attr('pointer-events', 'none');
 
       g.append('rect').attr('x', 0).attr('y', 0).attr('width', iW).attr('height', iH)
         .attr('fill', 'transparent')
@@ -527,11 +550,11 @@ function initTimeline(csv) {
             Math.round(xScale.invert(mx)),
             facet.series[0].values.length - 1
           ));
-          hoverLine.attr('x1', xScale(mi)).attr('x2', xScale(mi)).attr('opacity', 0.5);
+          hoverLine.attr('x1', xScale(mi)).attr('x2', xScale(mi)).attr('opacity', 0.35);
           const rows = facet.series.map(s =>
-            `<span style="color:${s.color}">${s.name}: <strong>${fmtN(s.values[mi].count)}</strong></span>`
+            `${dot(s.color)}<span>${s.name}:</span> <strong>${fmtN(s.values[mi].count)}</strong>`
           ).join('<br>');
-          tip.show(`<strong>${MONTHS[mi]} ${facet.year}</strong><br>${rows}`, event.clientX, event.clientY);
+          tip.show(`<span class="tt-title">${MONTHS[mi]} ${facet.year}</span>${rows}`, event.clientX, event.clientY);
         })
         .on('mouseleave', () => { hoverLine.attr('opacity', 0); tip.hide(); });
     });
@@ -539,7 +562,7 @@ function initTimeline(csv) {
     const bottomY = legendH + YEARS.length * fH;
     svg.append('line')
       .attr('x1', M.left).attr('y1', bottomY).attr('x2', M.left + iW).attr('y2', bottomY)
-      .attr('stroke', C.border).attr('opacity', 0.45);
+      .attr('stroke', C.border);
 
     if (isFirst) {
       onVisibleOnce(el, () => {
@@ -574,7 +597,7 @@ function initTemasGeneral(csv) {
   responsiveChart(el, (totalW, isMobile, isFirst) => {
     const colorOf = d => TEMA_COLOR[d.label] || C.muted;
     const onHover = (event, d) => tip.show(
-      `<strong>${d.label}</strong><br>${fmtN(d.value)} leyes · ${d.pct}%`,
+      `<span class="tt-title">${dot(colorOf(d))}${d.label}</span><strong>${fmtN(d.value)}</strong> leyes · ${d.pct}%`,
       event.clientX, event.clientY
     );
 
@@ -606,8 +629,12 @@ function initTemasGeneral(csv) {
           return d.label.length > maxCh ? d.label.slice(0, maxCh - 1) + '…' : d.label;
         });
 
+      rows.append('rect')
+        .attr('x', 0).attr('y', labelH + 6).attr('height', barH).attr('width', w)
+        .attr('fill', C.track);
+
       const bars = rows.append('rect')
-        .attr('x', 0).attr('y', labelH + 6).attr('height', barH).attr('rx', barH / 2)
+        .attr('x', 0).attr('y', labelH + 6).attr('height', barH).attr('rx', 1)
         .attr('width', isFirst ? 0 : d => x(d.value))
         .attr('fill', colorOf)
         .style('cursor', 'pointer')
@@ -619,7 +646,7 @@ function initTemasGeneral(csv) {
         .attr('x', isFirst ? 6 : d => x(d.value) + 8)
         .attr('y', labelH + 6 + barH / 2).attr('dy', '0.35em')
         .style('font-size', '13px').style('font-weight', '700')
-        .style('fill', colorOf).style('opacity', isFirst ? 0 : 1)
+        .style('fill', C.text).style('opacity', isFirst ? 0 : 1)
         .text(d => `${d.pct}%`);
 
       if (isFirst) {
@@ -636,7 +663,7 @@ function initTemasGeneral(csv) {
     // ── DESKTOP: etiqueta a la izquierda de la barra ──────────
     const labelW = Math.min(Math.max(totalW * 0.42, 260), 380);
     const margin = { top: 12, right: 72, bottom: 16, left: labelW };
-    const rowH   = 38;
+    const rowH   = 36;
     const totalH = data.length * rowH + margin.top + margin.bottom;
     const w      = totalW - margin.left - margin.right;
 
@@ -650,18 +677,22 @@ function initTemasGeneral(csv) {
     const y = d3.scaleBand().domain(data.map((_, i) => i))
       .range([0, totalH - margin.top - margin.bottom]).padding(0.22);
     const bh   = y.bandwidth();
-    const barH = 16;
+    const barH = 18;
 
     const rows = g.selectAll('.tema-row').data(data).enter().append('g')
       .attr('class', 'tema-row').attr('transform', (_, i) => `translate(0,${y(i)})`);
 
     rows.append('text')
       .attr('x', -8).attr('y', bh / 2).attr('dy', '0.35em').attr('text-anchor', 'end')
-      .style('font-size', '12px').style('fill', C.text)
+      .style('font-size', '13px').style('fill', C.text)
       .text(d => d.label.length > 44 ? d.label.slice(0, 44) + '…' : d.label);
 
+    rows.append('rect')
+      .attr('x', 0).attr('y', (bh - barH) / 2).attr('height', barH).attr('width', w)
+      .attr('fill', C.track);
+
     const bars = rows.append('rect')
-      .attr('x', 0).attr('y', (bh - barH) / 2).attr('height', barH).attr('rx', barH / 2)
+      .attr('x', 0).attr('y', (bh - barH) / 2).attr('height', barH).attr('rx', 1)
       .attr('width', isFirst ? 0 : d => x(d.value))
       .attr('fill', colorOf)
       .style('cursor', 'pointer')
@@ -672,8 +703,8 @@ function initTemasGeneral(csv) {
     const pcts = rows.append('text')
       .attr('x', isFirst ? 0 : d => x(d.value)).attr('y', bh / 2)
       .attr('dy', '0.35em').attr('dx', 8)
-      .style('font-size', '11px').style('font-weight', '700')
-      .style('fill', colorOf).style('opacity', isFirst ? 0 : 1)
+      .style('font-size', '12px').style('font-weight', '700')
+      .style('fill', C.text).style('opacity', isFirst ? 0 : 1)
       .text(d => `${d.pct}%`);
 
     if (isFirst) {
@@ -711,7 +742,7 @@ function initTemasBarCity(containerId, csv, city, cityColor) {
 
   responsiveChart(el, (totalW, isMobile, isFirst) => {
     const onHover = (event, d) => tip.show(
-      `<strong>${d.label}</strong><br>${fmtN(d.value)} leyes · ${d.pct.toFixed(1)}%`,
+      `<span class="tt-title">${d.label}</span><strong>${fmtN(d.value)}</strong> leyes · ${d.pct.toFixed(1)}%`,
       event.clientX, event.clientY
     );
 
@@ -746,9 +777,9 @@ function initTemasBarCity(containerId, csv, city, cityColor) {
         });
 
       const bars = rows.append('rect')
-        .attr('x', 0).attr('y', labelH + 4).attr('height', barH).attr('rx', 3)
+        .attr('x', 0).attr('y', labelH + 4).attr('height', barH).attr('rx', 1)
         .attr('width', isFirst ? 0 : d => x(d.pct))
-        .attr('fill', cityColor).attr('opacity', 0.85)
+        .attr('fill', cityColor)
         .style('cursor', 'pointer')
         .on('mouseover', onHover)
         .on('mousemove', e => tip.move(e.clientX, e.clientY))
@@ -757,8 +788,8 @@ function initTemasBarCity(containerId, csv, city, cityColor) {
       const pcts = rows.append('text')
         .attr('x', isFirst ? 2 : d => x(d.pct) + 5)
         .attr('y', labelH + 4 + barH / 2).attr('dy', '0.35em')
-        .style('font-size', '11px').style('font-weight', '700')
-        .style('fill', cityColor).style('opacity', isFirst ? 0 : 1)
+        .style('font-size', '12px').style('font-weight', '700')
+        .style('fill', C.text).style('opacity', isFirst ? 0 : 1)
         .text(d => `${d.pct.toFixed(1)}%`);
 
       if (isFirst) {
@@ -775,8 +806,8 @@ function initTemasBarCity(containerId, csv, city, cityColor) {
     // ── DESKTOP ───────────────────────────────────────────────
     const labelW = Math.min(Math.max(totalW * 0.38, 200), 320);
     const margin = { top: 16, right: 68, bottom: 28, left: labelW };
-    const rowH   = 36;
-    const barH   = 14;
+    const rowH   = 34;
+    const barH   = 16;
     const chartH = data.length * rowH;
     const totalH = chartH + margin.top + margin.bottom;
     const w      = totalW - margin.left - margin.right;
@@ -796,31 +827,27 @@ function initTemasBarCity(containerId, csv, city, cityColor) {
     x.ticks(5).forEach(tick => {
       g.append('line')
         .attr('x1', x(tick)).attr('y1', 0).attr('x2', x(tick)).attr('y2', chartH)
-        .attr('stroke', C.border).attr('stroke-dasharray', '3,3').attr('opacity', 0.6);
+        .attr('stroke', tick === 0 ? C.text : C.border);
     });
 
     // X axis
     g.append('g')
       .attr('transform', `translate(0,${chartH})`)
-      .call(d3.axisBottom(x).ticks(5).tickFormat(d => `${d % 1 === 0 ? d : d.toFixed(1)}%`).tickSize(4))
-      .call(gr => {
-        gr.select('.domain').remove();
-        gr.selectAll('.tick line').attr('stroke', C.border);
-        gr.selectAll('.tick text').style('fill', C.muted).style('font-size', '10px');
-      });
+      .call(d3.axisBottom(x).ticks(5).tickFormat(d => `${d % 1 === 0 ? d : d.toFixed(1)}%`).tickSize(0).tickPadding(8))
+      .call(gr => styleAxis(gr, 11));
 
     const rows = g.selectAll('.tema-row').data(data).enter().append('g')
       .attr('class', 'tema-row').attr('transform', (_, i) => `translate(0,${y(i)})`);
 
     rows.append('text')
       .attr('x', -8).attr('y', bh / 2).attr('dy', '0.35em').attr('text-anchor', 'end')
-      .style('font-size', '12px').style('fill', C.text)
+      .style('font-size', '13px').style('fill', C.text)
       .text(d => d.label.length > 42 ? d.label.slice(0, 42) + '…' : d.label);
 
     const bars = rows.append('rect')
-      .attr('x', 0).attr('y', (bh - barH) / 2).attr('height', barH).attr('rx', 3)
+      .attr('x', 0).attr('y', (bh - barH) / 2).attr('height', barH).attr('rx', 1)
       .attr('width', isFirst ? 0 : d => x(d.pct))
-      .attr('fill', cityColor).attr('opacity', 0.85)
+      .attr('fill', cityColor)
       .style('cursor', 'pointer')
       .on('mouseover', onHover)
       .on('mousemove', e => tip.move(e.clientX, e.clientY))
@@ -829,8 +856,8 @@ function initTemasBarCity(containerId, csv, city, cityColor) {
     const pcts = rows.append('text')
       .attr('x', isFirst ? 0 : d => x(d.pct))
       .attr('y', bh / 2).attr('dy', '0.35em').attr('dx', 7)
-      .style('font-size', '11px').style('font-weight', '700')
-      .style('fill', cityColor).style('opacity', isFirst ? 0 : 1)
+      .style('font-size', '12px').style('font-weight', '700')
+      .style('fill', C.text).style('opacity', isFirst ? 0 : 1)
       .text(d => `${d.pct.toFixed(1)}%`);
 
     if (isFirst) {
@@ -913,9 +940,9 @@ function initSubtemasHierarchy(containerId, csv, city, excludeTemas = []) {
     g.selectAll('.t-ring').data(temaNodes).enter().append('circle')
       .attr('class', 't-ring')
       .attr('cx', d => d.x).attr('cy', d => d.y).attr('r', d => d.r)
-      .attr('fill', d => tColor(d) + '12')
+      .attr('fill', d => tColor(d) + '14')
       .attr('stroke', d => tColor(d))
-      .attr('stroke-width', 1.8).attr('stroke-opacity', 0.65);
+      .attr('stroke-width', 1.2).attr('stroke-opacity', 0.9);
 
     // ── Tema name labels (top inside ring) ────────────────────
     g.selectAll('.t-lbl').data(temaNodes.filter(d => d.r > 28)).enter().append('text')
@@ -926,7 +953,7 @@ function initSubtemasHierarchy(containerId, csv, city, excludeTemas = []) {
       .style('font-size', d => `${Math.min(10, Math.max(7, d.r * 0.17))}px`)
       .style('font-weight', '800').style('letter-spacing', '0.07em')
       .style('text-transform', 'uppercase')
-      .style('fill', d => tColor(d)).style('pointer-events', 'none')
+      .style('fill', d => inkOf(tColor(d))).style('pointer-events', 'none')
       .text(d => {
         const n = d.data.name;
         const maxCh = Math.floor(d.r * 0.38);
@@ -938,17 +965,18 @@ function initSubtemasHierarchy(containerId, csv, city, excludeTemas = []) {
       .attr('class', 's-circle')
       .attr('cx', d => d.x).attr('cy', d => d.y)
       .attr('r', isFirst ? 0 : d => d.r)
-      .attr('fill', d => tColor(d)).attr('fill-opacity', 0.80)
+      .attr('fill', d => tColor(d))
+      .attr('stroke', '#fff').attr('stroke-width', 1)
       .style('cursor', 'pointer')
       .on('mouseover', (event, d) => {
-        d3.select(event.currentTarget).attr('fill-opacity', 1);
+        d3.select(event.currentTarget).attr('stroke', C.text).attr('stroke-width', 1.5);
         tip.show(
-          `<strong>${d.data.name}</strong><br>${fmtN(d.data.value)} leyes · ${d.data.pct.toFixed(1)}%`,
+          `<span class="tt-title">${d.data.name}</span>${dot(tColor(d))}<span>${d.parent.data.name}</span><br><strong>${fmtN(d.data.value)}</strong> leyes · ${d.data.pct.toFixed(1)}%`,
           event.clientX, event.clientY
         );
       })
       .on('mousemove', e => tip.move(e.clientX, e.clientY))
-      .on('mouseout', event => { d3.select(event.currentTarget).attr('fill-opacity', 0.80); tip.hide(); });
+      .on('mouseout', event => { d3.select(event.currentTarget).attr('stroke', '#fff').attr('stroke-width', 1); tip.hide(); });
 
     // ── Text labels inside subtema circles ────────────────────
     const MIN_R = isMobile ? 22 : 18;
@@ -958,7 +986,7 @@ function initSubtemasHierarchy(containerId, csv, city, excludeTemas = []) {
         .attr('x', d.x).attr('y', d.y)
         .attr('text-anchor', 'middle')
         .style('font-size', `${fs}px`).style('font-weight', '600')
-        .style('fill', 'white').style('pointer-events', 'none');
+        .style('fill', inkOn(tColor(d))).style('pointer-events', 'none');
       wrapCircleText(t, d.data.name, d.r, fs);
     });
 
@@ -993,7 +1021,7 @@ function initChoropleth(containerId, districtGeo, lawGeo, city, cityColor, label
   });
 
   const maxCount = d3.max(districtGeo.features, f => f.properties._count) || 1;
-  const lightColor = d3.interpolate('#F0F0F4', cityColor)(0.12);
+  const lightColor = d3.interpolate('#F4F4F4', cityColor)(0.12);
 
   responsiveChart(el, (totalW, isMobile, isFirst) => {
     const legendH = 36;
@@ -1023,15 +1051,15 @@ function initChoropleth(containerId, districtGeo, lawGeo, city, cityColor, label
       .data(districtGeo.features)
       .enter().append('path')
       .attr('d', path)
-      .attr('fill', d => d.properties._count > 0 ? colorScale(d.properties._count) : '#E4E4EC')
+      .attr('fill', d => d.properties._count > 0 ? colorScale(d.properties._count) : '#EDEDED')
       .attr('stroke', 'white')
       .attr('stroke-width', isMobile ? 0.6 : 0.9)
       .style('cursor', 'pointer')
       .on('mouseover', (event, d) => {
-        d3.select(event.currentTarget).attr('stroke', cityColor).attr('stroke-width', 2);
+        d3.select(event.currentTarget).attr('stroke', C.text).attr('stroke-width', 1.8).raise();
         const sub = subLabelFn(d.properties);
         tip.show(
-          `<strong>${labelFn(d.properties)}</strong>${sub ? ` — ${sub}` : ''}<br>${fmtN(d.properties._count)} leyes`,
+          `<span class="tt-title">${labelFn(d.properties)}</span>${sub ? `<span>${sub}</span><br>` : ''}<strong>${fmtN(d.properties._count)}</strong> leyes`,
           event.clientX, event.clientY
         );
       })
@@ -1049,13 +1077,13 @@ function initChoropleth(containerId, districtGeo, lawGeo, city, cityColor, label
       if (isNaN(cx) || isNaN(cy)) return;
       const area = path.area(feat);
       if (area < (isMobile ? 300 : 500)) return;
-      const dark = feat.properties._count > maxCount * 0.55;
+      const fillC = feat.properties._count > 0 ? colorScale(feat.properties._count) : '#EDEDED';
       mapG.append('text')
         .attr('x', cx).attr('y', cy)
         .attr('text-anchor', 'middle').attr('dy', '0.35em')
-        .style('font-size', isMobile ? '7.5px' : '9px')
+        .style('font-size', isMobile ? '8px' : '10px')
         .style('font-weight', '700')
-        .style('fill', dark ? 'rgba(255,255,255,0.9)' : C.muted)
+        .style('fill', inkOn(fillC) === C.text ? C.muted : 'rgba(255,255,255,0.92)')
         .style('pointer-events', 'none')
         .text(labelFn(feat.properties).replace('Distrito ', ''));
     });
@@ -1074,12 +1102,11 @@ function initChoropleth(containerId, districtGeo, lawGeo, city, cityColor, label
 
     svg.append('rect')
       .attr('x', lX).attr('y', lY)
-      .attr('width', lW).attr('height', lH).attr('rx', lH / 2)
+      .attr('width', lW).attr('height', lH)
       .attr('fill', `url(#${gId})`);
 
     const lblStyle = sel => sel
-      .style('font-size', '9px').style('fill', C.muted)
-      .style('font-family', "'Inter Tight', sans-serif");
+      .style('font-size', '11px').style('fill', C.light);
 
     svg.append('text').attr('x', lX).attr('y', lY - 4)
       .call(lblStyle).text('0 leyes');
@@ -1137,11 +1164,18 @@ function initMap(geo, city, containerId) {
     attributionControl: true,
   });
 
-  // Tiles CartoDB Positron — fondo claro y mínimo
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/">CARTO</a>',
-    subdomains: 'abcd',
+  // Tiles Esri World Light Gray — fondo gris claro y mínimo, sin API key
+  // (CARTO basemaps ahora responde "API KEY REQUIRED" a peticiones anónimas)
+  const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas';
+  L.tileLayer(`${ESRI}/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}`, {
+    attribution: 'Tiles © <a href="https://www.esri.com/">Esri</a> — Esri, HERE, Garmin, © OpenStreetMap contributors',
+    maxNativeZoom: 16,
     maxZoom: 19,
+  }).addTo(map);
+  L.tileLayer(`${ESRI}/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}`, {
+    maxNativeZoom: 16,
+    maxZoom: 19,
+    opacity: 0.8,
   }).addTo(map);
 
   // Ajustar vista a los puntos con margen
@@ -1155,24 +1189,24 @@ function initMap(geo, city, containerId) {
     const marker = L.circleMarker([p.lat, p.lon], {
       radius,
       fillColor: color,
-      color: 'rgba(255,255,255,0.7)',
-      weight: 0.8,
-      fillOpacity: 0.80,
+      color: '#FFFFFF',
+      weight: 1,
+      fillOpacity: 0.9,
     }).addTo(map);
 
     marker
       .on('mouseover', function(e) {
-        this.setStyle({ fillOpacity: 1, weight: 1.5 });
+        this.setStyle({ fillOpacity: 1, weight: 2, color: C.text });
+        this.bringToFront();
         tip.show(
-          `<strong>Ley ${p.ley}</strong><br>
-           <span style="color:${color};font-size:11px">${p.tema}</span><br>
-           <span style="font-size:11px">${(p.resumen || '').slice(0, 110)}…</span>`,
+          `<span class="tt-title">Ley ${p.ley}</span>${dot(color)}<span>${p.tema}</span>
+           <span class="tt-note">${(p.resumen || '').slice(0, 110)}…</span>`,
           e.originalEvent.clientX, e.originalEvent.clientY
         );
       })
       .on('mousemove', e => tip.move(e.originalEvent.clientX, e.originalEvent.clientY))
       .on('mouseout', function() {
-        this.setStyle({ fillOpacity: 0.80, weight: 0.8 });
+        this.setStyle({ fillOpacity: 0.9, weight: 1, color: '#FFFFFF' });
         tip.hide();
       });
   });
@@ -1186,13 +1220,14 @@ function initMap(geo, city, containerId) {
   Legend.onAdd = () => {
     const div = L.DomUtil.create('div');
     Object.assign(div.style, {
-      background: 'rgba(255,255,255,0.93)',
+      background: 'rgba(255,255,255,0.95)',
       padding: '8px 12px',
-      borderRadius: '6px',
-      fontFamily: "'Inter Tight', 'Inter', sans-serif",
-      fontSize: '11px',
+      borderRadius: '2px',
+      border: '1px solid #E6E6E6',
+      fontFamily: "'Libre Franklin', Helvetica, Arial, sans-serif",
+      fontSize: '11.5px',
       lineHeight: '1.85',
-      boxShadow: '0 1px 6px rgba(48,48,61,0.14)',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
       maxWidth: '220px',
     });
     presentTemas.forEach(tema => {
@@ -1200,8 +1235,8 @@ function initMap(geo, city, containerId) {
       const label = tema.length > 32 ? tema.slice(0, 32) + '…' : tema;
       div.innerHTML += `
         <div style="display:flex;align-items:center;gap:7px;">
-          <span style="width:10px;height:10px;border-radius:50%;background:${col};flex-shrink:0;display:inline-block;opacity:0.88;"></span>
-          <span style="color:#30303D;">${label}</span>
+          <span style="width:10px;height:10px;border-radius:50%;background:${col};flex-shrink:0;display:inline-block;"></span>
+          <span style="color:#282828;">${label}</span>
         </div>`;
     });
     return div;

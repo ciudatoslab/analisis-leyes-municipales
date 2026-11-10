@@ -21,72 +21,79 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400&display=swap"
     rel="stylesheet">
 
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9/dist/leaflet.css">
 
   <style>
+    /* ══════════════════════════════════════════════════════
+       DISEÑO — inspirado en The Pudding (pudding.cool/2020/08/income)
+       Fondo blanco, texto carbón, serif para la narrativa,
+       sans-serif para gráficos y metadatos, acentos planos.
+       ══════════════════════════════════════════════════════ */
     :root {
-      /* ── Paleta ── */
-      --color-bg:         #F4F4F4;
-      --color-bg-alt:     #EBEBEB;
+      /* ── Neutros ── */
+      --color-bg:         #FFFFFF;
+      --color-bg-alt:     #F4F4F4;
       --color-bg-card:    #FFFFFF;
-      --color-bg-dark:    #30303D;
-      --color-text:       #30303D;
-      --color-text-muted: #5A5A6A;
-      --color-text-light: #8A8A9A;
+      --color-bg-dark:    #282828;
+      --color-text:       #282828;
+      --color-text-muted: #5B5B5B;
+      --color-text-light: #828282;
       --color-text-inv:   #F4F4F4;
-      --color-border:     #D8D8E0;
-      --color-divider:    #D0D0DA;
-      --color-accent:     #3C6BAA;
-      --color-accent-2:   #F1B62A;
-      --color-accent-3:   #20A47A;
-      --data-1: #B54B68;
-      --data-2: #3C6BAA;
-      --data-3: #20A47A;
-      --data-4: #F1B62A;
-      --data-5: #7368C4;
-      --data-6: #30303D;
+      --color-border:     #E6E6E6;
+      --color-divider:    #C9C9C9;
+
+      /* ── Acentos ── */
+      --color-accent:       #008577;
+      --color-accent-hover: #007367;
+      --color-accent-2:     #FF8850;
+      --color-accent-3:     #124653;
 
       /* ── Ciudades ── */
-      --city-lp:   #B54B68;
-      --city-cbba: #3C6BAA;
-      --city-sc:   #20A47A;
+      --city-lp:   #FF8850;
+      --city-cbba: #00A08F;
+      --city-sc:   #124653;
 
       /* ── Tipografía ── */
-      --font-serif: 'Lora', Georgia, serif;
-      --font-sans:  'Inter Tight', 'Inter', system-ui, sans-serif;
+      --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+      --font-sans:  'Libre Franklin', Helvetica, Arial, sans-serif;
+
+      /* ── Layout ── */
+      --max-w-text: 640px;
+      --max-w-wide: 860px;
     }
 
-    /* Base: fondo oscuro en extremos (hero + créditos); secciones de contenido cubren con su propio bg */
+    html { font-size: 16px; }
+
     body {
-      background: #30303D;
-      color: var(--color-text);
-    }
-
-    .section:not(.section--alt) {
       background: var(--color-bg);
+      color: var(--color-text);
+      font-family: var(--font-sans);
+      font-weight: 400;
+      font-feature-settings: 'kern' 1, 'tnum' 1;
     }
 
-    /* Fuente de cuerpo: Lora para texto narrativo */
-    .article-body p,
-    .narrative-lead,
-    .hero__subtitle,
-    .pullquote__text,
-    .callout p {
-      font-family: var(--font-serif);
-    }
+    ::selection { background: rgba(0,160,143,0.22); }
 
-    /* Headings: Inter Tight */
-    h1, h2, h3, h4, h5, h6 {
-      font-family: var(--font-sans) !important;
+    /* ── Enlaces: subrayado fino, sin color ── */
+    a {
+      color: var(--color-text);
+      text-decoration: none;
+      border-bottom: 1px solid currentColor;
+      transition: color 0.15s, border-color 0.15s;
     }
+    a:hover { color: var(--color-accent); border-color: var(--color-accent); }
 
-    /* ── Hero ── */
+    h1, h2, h3, h4, h5, h6 { font-family: var(--font-serif); color: var(--color-text); }
+
+    /* ══════════════════════════════════════════════════════
+       HERO
+       ══════════════════════════════════════════════════════ */
     .hero {
-      background: #30303D;
+      background: var(--color-bg);
       min-height: 100vh;
       position: relative;
       overflow: hidden;
@@ -95,76 +102,74 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: clamp(4rem, 8vh, 6rem) clamp(1.5rem, 5vw, 5rem) clamp(5rem, 10vh, 7rem);
+      padding: clamp(3rem, 7vh, 5rem) clamp(1rem, 5vw, 5rem) clamp(5rem, 10vh, 7rem);
       gap: clamp(1.5rem, 3vh, 2.5rem);
     }
 
-    .hero::before { display: none; }
-
-    /* Wrapper que agrupa animación + texto para distribuirlos como una unidad */
     .hero__body {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: clamp(1rem, 2.5vh, 2rem);
+      gap: clamp(1.25rem, 3vh, 2.25rem);
       width: 100%;
       position: relative;
       z-index: 2;
     }
 
-    .hero__content { position: relative; z-index: 2; max-width: 700px; width: 100%; text-align: center; }
+    .hero__content { position: relative; z-index: 2; max-width: 780px; width: 100%; text-align: center; }
 
     .hero__title {
-      font-family: var(--font-sans) !important;
-      font-size: clamp(2rem, 5vw, 4rem) !important;
-      font-weight: 800 !important;
-      line-height: 1.1 !important;
-      letter-spacing: -0.025em !important;
-      color: #FFFFFF !important;
-      margin-bottom: var(--space-4);
+      font-family: var(--font-serif);
+      font-size: clamp(2.2rem, 5.4vw, 4rem);
+      font-weight: 600;
+      line-height: 1.08;
+      letter-spacing: -0.015em;
+      color: var(--color-text);
+      margin: 0 auto var(--space-6);
       text-align: center;
-    }
-
-    .hero__title .serif-italic {
-      display: block;
-      font-family: var(--font-serif) !important;
-      font-style: italic;
-      font-weight: 400;
-      color: #F1B62A !important;
-      font-size: 0.84em;
+      text-wrap: balance;
     }
 
     .hero__subtitle {
       font-family: var(--font-serif);
-      font-size: clamp(0.95rem, 1.7vw, 1.15rem);
-      line-height: 1.75;
-      color: rgba(255,255,255,0.65) !important;
-      max-width: 580px;
+      font-size: clamp(1.05rem, 1.8vw, 1.25rem);
+      line-height: 1.6;
+      color: var(--color-text-muted);
+      max-width: 600px;
       margin: 0 auto;
       text-align: center;
+      text-wrap: pretty;
     }
 
     .hero__meta {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: var(--space-4);
+      position: relative;
+      z-index: 2;
     }
 
-    .hero__logo {
-      height: 50px;
-      width: auto;
-      display: block;
-      padding: 5px 14px;
-      border-radius: 6px;
-    }
+    .hero__logo { height: 44px; width: auto; display: block; }
+    .hero__meta a { border: none; }
 
-    .hero__authors { justify-content: center; }
+    .hero__authors {
+      margin-top: var(--space-8);
+      text-align: center;
+    }
 
     .hero__author {
       font-family: var(--font-sans);
-      font-size: 0.85rem;
-      color: rgba(255,255,255,0.45) !important;
+      font-size: 0.9rem;
+      color: var(--color-text);
+    }
+    .hero__author a { font-weight: 700; }
+
+    .hero__date {
+      display: block;
+      margin-top: var(--space-2);
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      color: var(--color-text-light);
     }
 
     .hero__scroll-hint {
@@ -175,11 +180,13 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: var(--space-2);
-      color: rgba(255,255,255,0.2);
-      font-size: 0.68rem;
+      gap: var(--space-1);
+      color: var(--color-text-light);
+      font-size: 0.7rem;
       font-family: var(--font-sans);
-      letter-spacing: 0.12em;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
       z-index: 2;
     }
 
@@ -190,128 +197,285 @@
       50%       { transform: translateY(5px); }
     }
 
-    /* ── Tipografía narrativa ── */
-    .narrative-lead {
-      font-size: clamp(1.1rem, 2.1vw, 1.35rem);
-      line-height: 1.82;
-      color: var(--color-text);
+    /* ══════════════════════════════════════════════════════
+       SECCIONES Y TEXTO
+       ══════════════════════════════════════════════════════ */
+    .section,
+    .section--alt {
+      background: var(--color-bg);
+      padding-block: clamp(3rem, 7vw, 5rem);
     }
 
-    .article-body p {
-      line-height: 1.82;
+    .container { padding-inline: 1rem; }
+
+    .article-body p,
+    .article-body li {
+      font-family: var(--font-serif);
+      font-size: 1.125rem;
+      line-height: 1.65;
       color: var(--color-text);
+      margin-bottom: 1.4rem;
     }
 
+    .article-body strong { font-weight: 700; }
 
+    /* Encabezado de sección: serif grande, centrado, con filete */
     .article-body h2 {
-      font-size: clamp(1.7rem, 3.2vw, 2.5rem) !important;
-      font-weight: 700 !important;
-      letter-spacing: -0.02em;
-      line-height: 1.2 !important;
-      margin-block: var(--space-8) var(--space-4) !important;
+      position: relative;
+      font-family: var(--font-serif);
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      line-height: 1.18;
+      text-align: center;
+      text-wrap: balance;
+      max-width: 720px;
+      margin: 2.5rem auto 2.25rem;
+      padding-top: 2.25rem;
       color: var(--color-text);
     }
 
-    /* ── Chart cards ── */
+    .article-body h2::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 48px;
+      margin-left: -24px;
+      border-top: 3px solid var(--color-accent);
+    }
+
+    /* Subtítulo dentro de una sección */
+    .article-body h2.h2--sub {
+      font-size: clamp(1.4rem, 2.6vw, 1.75rem);
+      text-align: left;
+      padding-top: 0;
+      margin: 2.5rem 0 1rem;
+    }
+    .article-body h2.h2--sub::before { display: none; }
+
+    .article-body h2.h2--small {
+      font-size: 1.5rem;
+      padding-top: 0;
+      margin: 0 0 1rem;
+    }
+    .article-body h2.h2--small::before { display: none; }
+
+    /* Resaltado de texto con el color de cada serie (estilo Pudding) */
+    .hl {
+      font-weight: 600;
+      padding: 0 0.12em;
+      background: linear-gradient(to bottom, transparent 55%, var(--hl, rgba(0,160,143,0.25)) 55%);
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+    .hl--lp   { --hl: rgba(255,136,80,0.38); }
+    .hl--cbba { --hl: rgba(0,160,143,0.30); }
+    .hl--sc   { --hl: rgba(18,70,83,0.22); }
+
+    /* ══════════════════════════════════════════════════════
+       GRÁFICOS — figura limpia, sin tarjeta
+       ══════════════════════════════════════════════════════ */
     .chart-card {
-      border-radius: var(--radius-lg);
+      background: transparent;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: visible;
+      margin-block: 2.5rem 1rem;
+    }
+
+    .chart-card__header {
+      padding: 0 0 1.25rem;
+      border-bottom: none;
+      max-width: var(--max-w-text);
     }
 
     .chart-card__eyebrow {
       font-family: var(--font-sans);
-      font-size: 0.66rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
+      font-size: 1.05rem;
       font-weight: 700;
+      letter-spacing: 0;
+      text-transform: none;
+      line-height: 1.35;
       color: var(--color-text);
-      margin-bottom: var(--space-1);
+      margin-bottom: 0.3rem;
     }
 
-    .chart-card__title  { font-family: var(--font-sans) !important; color: var(--color-text); }
-    .chart-card__subtitle { font-family: var(--font-sans); color: var(--color-text-muted); }
-    .chart-card__footer { color: var(--color-text-light); border-color: var(--color-border); }
+    .chart-card__subtitle {
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      line-height: 1.5;
+      color: var(--color-text-light);
+    }
 
-    /* ── Pullquote ── */
+    .chart-card__body { padding: 0; }
+
+    .chart-card__body svg text,
+    .chart-card svg text {
+      font-family: var(--font-sans);
+    }
+
+    .article-body .chart-card__body { margin-block: 1.5rem 2rem; }
+
+    /* ══════════════════════════════════════════════════════
+       PULLQUOTE
+       ══════════════════════════════════════════════════════ */
     .pullquote {
-      border-left: none;
-      padding-left: 0;
-      margin-left: 0;
+      margin: 3rem 0 !important;
+      padding: 2.75rem 0 0;
       background: none;
-    }
-
-    .pullquote .pullquote__text {
+      border: none;
       text-align: center;
     }
-    .pullquote::before { color: var(--city-cbba); }
-    .pullquote__text  { color: var(--color-text); font-size: clamp(1.05rem, 2vw, 1.25rem); line-height: 1.7; }
-    .pullquote__attribution { font-family: var(--font-sans); font-size: 0.85rem; color: var(--color-text-muted); margin-top: var(--space-3); display: block; }
 
-    /* ── Callout ── */
-    .callout {
-      background: rgba(181,75,104,0.04);
-      border: 1px solid rgba(181,75,104,0.2);
-      border-radius: var(--radius);
+    .pullquote::before {
+      content: '\201C';
+      top: -0.05em;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 5rem;
+      color: var(--color-accent);
+      opacity: 1;
     }
 
-    .callout p { font-size: 0.97rem; line-height: 1.72; color: var(--color-text); }
+    .article-body .pullquote .pullquote__text {
+      font-family: var(--font-serif);
+      font-style: normal;
+      font-weight: 500;
+      font-size: clamp(1.35rem, 2.6vw, 1.7rem);
+      line-height: 1.4;
+      color: var(--color-text);
+      text-align: center;
+      text-wrap: balance;
+      margin-bottom: 1rem;
+    }
 
-    /* ── Sección alternada ── */
-    .section--alt { background: var(--color-bg-alt); }
-
-    /* ── Ciudad badge ── */
-    .city-badge {
-      display: inline-block;
-      padding: 2px 10px;
-      border-radius: 20px;
+    .pullquote__attribution {
+      display: block;
       font-family: var(--font-sans);
-      font-size: 0.68rem;
-      font-weight: 700;
+      font-style: normal;
+      font-size: 0.78rem;
+      font-weight: 600;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      margin-left: var(--space-2);
-      vertical-align: middle;
+      color: var(--color-text-light);
     }
 
-    .city-badge--lp   { background: rgba(181,75,104,0.12);  color: var(--city-lp);   }
-    .city-badge--cbba { background: rgba(60,107,170,0.12);  color: var(--city-cbba); }
-    .city-badge--sc   { background: rgba(32,164,122,0.12);  color: var(--city-sc);   }
+    /* ══════════════════════════════════════════════════════
+       BOTONES (descarga de datos)
+       ══════════════════════════════════════════════════════ */
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      justify-content: center;
+    }
 
-    /* ── Tooltip ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.95rem 1.4rem;
+      border: none;
+      border-radius: 3.75rem;
+      background: var(--color-accent);
+      color: #fff;
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .btn:hover { background: var(--color-accent-hover); color: #fff; }
+    .btn--dark { background: var(--color-text); }
+    .btn--dark:hover { background: #4F4F4F; }
+
+    /* ══════════════════════════════════════════════════════
+       CRÉDITOS / FOOTER
+       ══════════════════════════════════════════════════════ */
+    .credits {
+      background: var(--color-bg);
+      border-top: 4px solid var(--color-text);
+      padding-block: 3rem 4rem;
+    }
+    .credits__logo { display: block; text-align: center; margin-bottom: 2rem; border: none; }
+    .credits__logo img { height: 44px; width: auto; display: inline-block; }
+    .credits h2 {
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-text);
+      margin: 0 0 1.5rem;
+    }
+    .credits h3 {
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--color-text);
+      margin: 1.5rem 0 0.35rem;
+    }
+    .credits p {
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--color-text-muted);
+      margin: 0;
+    }
+
+    /* ── Metodología ── */
+    .methods .article-body p { font-size: 1rem; color: var(--color-text-muted); }
+
+    /* ══════════════════════════════════════════════════════
+       TOOLTIP
+       ══════════════════════════════════════════════════════ */
     .chart-tooltip {
       position: fixed;
-      background: #30303D;
-      color: #F4F4F4;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 8px;
-      padding: 9px 13px;
-      font-family: 'Inter Tight', 'Inter', sans-serif;
+      background: #FFFFFF;
+      color: var(--color-text);
+      border: 1px solid var(--color-border);
+      border-radius: 2px;
+      padding: 10px 12px;
+      font-family: var(--font-sans);
       font-size: 13px;
       line-height: 1.5;
       pointer-events: none;
       opacity: 0;
       z-index: 9999;
       transition: opacity 0.12s;
-      max-width: 250px;
-      box-shadow: 0 4px 16px rgba(48,48,61,0.25);
+      max-width: 260px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
     }
+    .chart-tooltip strong { color: var(--color-text); display: inline; margin: 0; }
+    .chart-tooltip .tt-title { display: block; font-weight: 700; margin-bottom: 2px; }
+    .chart-tooltip span { color: var(--color-text-muted); }
+    .chart-tooltip .tt-dot {
+      display: inline-block;
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: 0;
+    }
+    .chart-tooltip .tt-note { display: block; font-size: 12px; color: var(--color-text-muted); margin-top: 4px; }
 
     /* ── Progress bar ── */
-    .reading-progress { background: transparent; }
-    .reading-progress__bar { background: var(--city-cbba); }
+    .reading-progress { background: transparent; height: 3px; }
+    .reading-progress__bar { background: var(--color-accent); }
 
     /* ── Responsive ── */
     @media (max-width: 767px) {
       .hero {
         min-height: 100dvh;
-        padding: clamp(2.5rem, 5vh, 4rem) clamp(1.25rem, 4vw, 2rem);
-        /* 3 ítems (meta · body · scroll-hint) distribuidos en toda la altura */
+        padding: clamp(2rem, 5vh, 3.5rem) 1rem;
         justify-content: space-between;
         gap: 0;
       }
       .hero__body { gap: clamp(0.75rem, 1.8vh, 1.25rem); }
-      .hero__title { font-size: clamp(1.75rem, 6.5vw, 2.4rem) !important; }
-      .hero__subtitle { font-size: 0.9rem !important; }
-      /* scroll-hint entra al flujo flex para participar en space-between */
+      .hero__subtitle { font-size: 1rem; }
       .hero__scroll-hint {
         position: relative;
         bottom: auto;
@@ -319,10 +483,7 @@
         transform: none;
         align-self: center;
       }
-    }
-
-    @media (max-width: 640px) {
-      .narrative-lead { font-size: 1.05rem; }
+      .article-body p, .article-body li { font-size: 1.0625rem; }
     }
 
     /* ══════════════════════════════════════════════════════
@@ -332,7 +493,7 @@
       position: relative;
       z-index: 1;
       pointer-events: none;
-      width: min(94%, 760px);
+      width: min(100%, 760px);
     }
 
     .stamp-svg {
@@ -355,49 +516,48 @@
 
     .stamp-counter {
       font-family: var(--font-serif);
-      font-style: italic;
-      font-weight: 800;
-      font-size: clamp(3.4rem, 9.4vw, 5.6rem);
-      color: #fff;
+      font-weight: 600;
+      font-size: clamp(3.2rem, 9vw, 5.4rem);
+      color: var(--color-text);
       line-height: 1;
       letter-spacing: -0.02em;
       font-variant-numeric: tabular-nums;
-      text-shadow:
-        0 2px 18px rgba(0,0,0,0.55),
-        0 0 32px rgba(48,48,61,0.6);
+      background: var(--color-bg);
+      padding: 0 0.2em;
       will-change: transform;
     }
 
-    .stamp-counter.is-done {
-      animation: stamp-counter-pulse 0.7s ease-out;
-    }
+    .stamp-counter.is-done { animation: stamp-counter-pulse 0.7s ease-out; }
     @keyframes stamp-counter-pulse {
-      0%   { transform: scale(1);     text-shadow: 0 0 0 rgba(255,255,255,0); }
-      40%  { transform: scale(1.035); text-shadow: 0 0 36px rgba(255,255,255,0.28); }
-      100% { transform: scale(1);     text-shadow: 0 0 0 rgba(255,255,255,0); }
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.035); }
+      100% { transform: scale(1); }
     }
 
     .stamp-label {
-      font-family: 'Inter Tight', sans-serif;
-      font-size: clamp(0.7rem, 1.4vw, 0.88rem);
-      font-weight: 600;
-      letter-spacing: 0.32em;
+      font-family: var(--font-sans);
+      font-size: clamp(0.7rem, 1.4vw, 0.85rem);
+      font-weight: 700;
+      letter-spacing: 0.22em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.55);
+      color: var(--color-accent);
       margin-top: clamp(0.35rem, 0.8vh, 0.6rem);
+      background: var(--color-bg);
+      padding: 0 0.5em;
     }
 
     .stamp-sublabel {
-      font-family: 'Inter Tight', sans-serif;
+      font-family: var(--font-sans);
       font-size: clamp(0.62rem, 1.15vw, 0.74rem);
       font-weight: 500;
-      letter-spacing: 0.22em;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.34);
+      color: var(--color-text-light);
       margin-top: clamp(0.18rem, 0.4vh, 0.32rem);
+      background: var(--color-bg);
+      padding: 0 0.5em;
     }
 
-    /* Cada documento (papel): aparece y luego flota suavemente */
     .stamp-doc {
       opacity: 0;
       animation:
@@ -414,7 +574,6 @@
       70%      { transform: translateY(-1.5px) rotate(-0.25deg); }
     }
 
-    /* Sello aterriza con escala + rotación */
     .stamp-seal {
       opacity: 0;
       transform: scale(2.6) rotate(-22deg);
@@ -431,15 +590,10 @@
       .stamp-seal { opacity: 0.9; transform: none; animation: none; }
     }
 
-    /* ── Leaflet: neutralizar los resets globales de SVG/IMG ── */
-    /* styles.css aplica:
-         img, video, svg       { display: block; max-width: 100%; }
-         .chart-card__body svg { width: 100%; overflow: visible; }
-       Leaflet asigna width/height por atributo a sus <svg> overlays
-       (más grandes que el contenedor) y a sus <img> de tiles (256×256).
-       Esas reglas globales colapsan ambos al ancho del contenedor —
-       el SVG hace que los marcadores queden fuera del viewport y las
-       tiles del mapa base se apilan/desaparecen. */
+    /* ── Leaflet: neutralizar los resets globales de SVG/IMG ──
+       styles.css aplica `img, svg { display:block; max-width:100% }` y
+       `.chart-card__body svg { width:100% }`, que rompen los overlays
+       y tiles de Leaflet. */
     .leaflet-container,
     .leaflet-container * {
       max-width: none !important;
@@ -454,7 +608,14 @@
       height: auto !important;
       overflow: hidden;
     }
-    .leaflet-container { overflow: hidden; }
+    .leaflet-container {
+      overflow: hidden;
+      background: #F4F4F4;
+      font-family: var(--font-sans);
+      border: 1px solid var(--color-border);
+    }
+    .leaflet-container a { border-bottom: none; }
+    .leaflet-bar a { color: var(--color-text); }
   </style>
 </head>
 
@@ -473,8 +634,8 @@
   <header class="hero" aria-label="Encabezado del artículo">
 
     <!-- Logo Ciudatos Lab -->
-    <div class="hero__meta" style="position:relative;z-index:2;">
-      <img src="img/logo-ciudatos.png" alt="Ciudatos Lab" class="hero__logo">
+    <div class="hero__meta">
+      <a href="https://ciudatoslab.org/"><img src="img/logo-ciudatos.png" alt="Ciudatos Lab" class="hero__logo"></a>
     </div>
 
     <!-- Cuerpo central: animación + título agrupados -->
@@ -503,9 +664,9 @@
         Analizamos y georreferenciamos más de 1.500 leyes aprobadas por los Concejos de los municipios capitales del eje central de Bolivia, entre 2021 y 2026.
       </p>
 
-      <div class="hero__authors" style="margin-top:var(--space-4);text-align:center;">
+      <div class="hero__authors">
         <span class="hero__author">
-          Por <strong style="color:rgba(255,255,255,0.75)"><a href="https://ciudatoslab.org/">Ciudatos Lab</a></strong>
+          Por <a href="https://ciudatoslab.org/">Ciudatos Lab</a>
         </span>
       </div>
 
@@ -573,18 +734,18 @@
       <div class="container container--text" style="margin-top:var(--space-8)">
         <div class="article-body">
           <p>
-            Como se puede ver, la aprobación de normas en Cochabamba fue masiva en comparación con las otras ciudades: 945 leyes aprobadas en el periodo analizado. Esto puede deberse a que el partido de Reyes Villa dentro del Concejo contó con una mayoría absoluta, que actuó como un "rodillo" para aprobar muchas normas. Este alto número de leyes, sin embargo, no significa necesariamente que estas hayan sido profundas o bien pensadas para resolver los problemas locales.
+            Como se puede ver, la aprobación de normas en <span class="hl hl--cbba">Cochabamba</span> fue masiva en comparación con las otras ciudades: 945 leyes aprobadas en el periodo analizado. Esto puede deberse a que el partido de Reyes Villa dentro del Concejo contó con una mayoría absoluta, que actuó como un "rodillo" para aprobar muchas normas. Este alto número de leyes, sin embargo, no significa necesariamente que estas hayan sido profundas o bien pensadas para resolver los problemas locales.
           </p>
           <p>
-            En segundo lugar está Santa Cruz de la Sierra, con 460 leyes aprobadas. Es un número considerable, pese a que el alcalde saliente tenía una oposición fuerte dentro del Concejo. Pero, como veremos más adelante, la gran mayoría de leyes aprobadas en Santa Cruz no tienen que ver con temas cruciales para el gobierno de la ciudad, sino con efemérides y reconocimientos.
+            En segundo lugar está <span class="hl hl--sc">Santa Cruz de la Sierra</span>, con 460 leyes aprobadas. Es un número considerable, pese a que el alcalde saliente tenía una oposición fuerte dentro del Concejo. Pero, como veremos más adelante, la gran mayoría de leyes aprobadas en Santa Cruz no tienen que ver con temas cruciales para el gobierno de la ciudad, sino con efemérides y reconocimientos.
           </p>
           <p>
-            Por último, está La Paz, donde la producción normativa en cinco años fue mínima en comparación con las otras dos ciudades. Durante la gestión pasada, La Paz aprobó 121 leyes municipales nuevas, lo que equivale aproximadamente al 13% de las normas elaboradas en Cochabamba. Esta baja producción normativa puede tener que ver con varios elementos, entre ellos, la ausencia de un programa edil claro, la baja gobernabilidad y la fragmentación política en el Concejo paceño.
+            Por último, está <span class="hl hl--lp">La Paz</span>, donde la producción normativa en cinco años fue mínima en comparación con las otras dos ciudades. Durante la gestión pasada, La Paz aprobó 121 leyes municipales nuevas, lo que equivale aproximadamente al 13% de las normas elaboradas en Cochabamba. Esta baja producción normativa puede tener que ver con varios elementos, entre ellos, la ausencia de un programa edil claro, la baja gobernabilidad y la fragmentación política en el Concejo paceño.
           </p>
         </div>
 
         <div class="article-body" style="margin-top:var(--space-6)">
-          <h2 style="font-size:clamp(1.4rem,3vw,2rem) !important">La producción de leyes en el tiempo</h2>
+          <h2 class="h2--sub">La producción de leyes en el tiempo</h2>
           <p>
             Al observar la producción de normas en el tiempo, es claro que hay meses y coyunturas donde los Concejos Municipales son más activos.
           </p>
@@ -608,13 +769,13 @@
       <div class="container container--text" style="margin-top:var(--space-8)">
         <div class="article-body">
           <p>
-            El caso más evidente es Santa Cruz de la Sierra, que tiene un pico de emisión de leyes prácticamente cada febrero y septiembre; pues en esos meses se conmemora la fundación y el aniversario de la ciudad, respectivamente. Es en estos momentos donde el Concejo cruceño aprobó más normas, principalmente de reconocimiento a ciudadanos e instituciones cruceñas destacadas.
+            El caso más evidente es <span class="hl hl--sc">Santa Cruz de la Sierra</span>, que tiene un pico de emisión de leyes prácticamente cada febrero y septiembre; pues en esos meses se conmemora la fundación y el aniversario de la ciudad, respectivamente. Es en estos momentos donde el Concejo cruceño aprobó más normas, principalmente de reconocimiento a ciudadanos e instituciones cruceñas destacadas.
           </p>
           <p>
-            Por otra parte, Cochabamba tiene picos de emisión de leyes alrededor de marzo y diciembre en distintos años, meses en los que normalmente se realizan ajustes a los presupuestos municipales y se da inicio a un nuevo año fiscal. <a href="https://www.lostiempos.com/actualidad/cochabamba/20260220/alcaldia-cochabamba-alcanzo-ejecucion-presupuestaria-del-91-2025">Cochabamba es uno de los municipios con mayor ejecución presupuestaria del país</a>, y nuestro análisis parece confirmar la capacidad del gobierno local de planificar y ajustar sus presupuestos.
+            Por otra parte, <span class="hl hl--cbba">Cochabamba</span> tiene picos de emisión de leyes alrededor de marzo y diciembre en distintos años, meses en los que normalmente se realizan ajustes a los presupuestos municipales y se da inicio a un nuevo año fiscal. <a href="https://www.lostiempos.com/actualidad/cochabamba/20260220/alcaldia-cochabamba-alcanzo-ejecucion-presupuestaria-del-91-2025">Cochabamba es uno de los municipios con mayor ejecución presupuestaria del país</a>, y nuestro análisis parece confirmar la capacidad del gobierno local de planificar y ajustar sus presupuestos.
           </p>
           <p>
-            Mientras, en La Paz casi no se registran temporadas altas, y en muchos meses no se aprobó ninguna ley. Un pico excepcional se dio en julio de 2024, cuando se aprobaron 10 normas, en su mayoría festivas y patrimoniales, para conmemorar el 16 de julio.
+            Mientras, en <span class="hl hl--lp">La Paz</span> casi no se registran temporadas altas, y en muchos meses no se aprobó ninguna ley. Un pico excepcional se dio en julio de 2024, cuando se aprobaron 10 normas, en su mayoría festivas y patrimoniales, para conmemorar el 16 de julio.
           </p>
         </div>
       </div>
@@ -688,6 +849,7 @@
         <div class="article-body">
           <p>
            ¿Qué tipo de normas se aprobaron dentro de estos ejes temáticos? En este gráfico de burbujas podemos ver los temas y subtemas de las leyes aprobadas en La Paz y, por ejemplo, en temas de suelo y vivienda, fueron muy frecuentes normas dedicadas a la reversión de suelo en favor de organizaciones de la sociedad (30 leyes). Es un gráfico interactivo, pasa el cursor sobre cada burbuja para explorarlo.
+          </p>
 
           <div class="chart-card__body">
             <div id="chart-subtemas-lp"></div>
@@ -956,7 +1118,7 @@
         </div>
 
         <div class="article-body" style="margin-top:var(--space-8)">
-          <h2 style="font-size:clamp(1.4rem,3vw,2rem) !important">Tres prioridades para la nueva gestión</h2>
+          <h2 class="h2--sub">Tres prioridades para la nueva gestión</h2>
           
           <p style="margin-top:var(--space-5)">
             Nuestros entrevistados coincidieron en que la recomendación a los nuevos Concejos Municipales no es producir más leyes por producirlas, sino producir mejores leyes: normas accesibles, alineadas con competencias, basadas en evidencia, conectadas con una visión de ciudad y evaluadas en el tiempo. Recogimos sus sugerencias, y las resumimos en tres prioridades para la nueva gestión edil:
@@ -976,10 +1138,10 @@
 
 
     <!-- ── Metodología ── -->
-    <section class="section">
+    <section class="section methods">
       <div class="container container--text">
         <div class="article-body">
-          <h2 style="font-size:var(--text-2xl); margin-bottom:var(--space-4);">Metodología y datos</h2>
+          <h2 class="h2--sub">Metodología y datos</h2>
           <div>
             <p>
               Para conformar la base de datos, realizamos un <em>scraping</em> a las gacetas municipales de La Paz, Cochabamba y Santa Cruz, obteniendo un total de 1.527 leyes aprobadas y sancionadas entre enero de 2021 y marzo de 2026. Posteriormente, el equipo de Ciudatos Lab realizó un etiquetado manual para identificar los temas, subtemas y la ubicación geográfica de cada ley municipal, cuando correspondía. La base de datos está abierta.
@@ -987,13 +1149,12 @@
             <p style="margin-top:var(--space-3);">
               Las visualizaciones fueron elaboradas con D3.js v7. Los mapas muestran únicamente las leyes que contaban con referencia geográfica identificable.
             </p>
-            <br>
-            <div style="display:flex; flex-wrap:wrap; gap:var(--space-3); margin-top:var(--space-5); justify-content:center;">
-              <a href="https://ciudatoslab.org/datos/leyes-municipales-cochabamba-santa-cruz-la-paz/" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.65rem 1.25rem; background:#1a56db; color:#fff; border-radius:6px; font-size:var(--text-sm); font-weight:600; text-decoration:none; transition:background 0.2s;" onmouseover="this.style.background='#1444b0'" onmouseout="this.style.background='#1a56db'">
+            <div class="btn-row">
+              <a href="https://ciudatoslab.org/datos/leyes-municipales-cochabamba-santa-cruz-la-paz/" target="_blank" rel="noopener" class="btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Descarga los datos en Google Drive
               </a>
-              <a href="https://github.com/ciudatoslab/analisis-leyes-municipales/tree/master/data" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.65rem 1.25rem; background:#24292F; color:#fff; border-radius:6px; font-size:var(--text-sm); font-weight:600; text-decoration:none; transition:background 0.2s;" onmouseover="this.style.background='#3a3f47'" onmouseout="this.style.background='#24292F'">
+              <a href="https://github.com/ciudatoslab/analisis-leyes-municipales/tree/master/data" target="_blank" rel="noopener" class="btn btn--dark">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
                 Descarga los datos en GitHub
               </a>
@@ -1006,19 +1167,19 @@
       <!-- ══════════════════════════════════════════════════════
        CRÉDITOS
        ══════════════════════════════════════════════════════ -->
-    <section class="section" style="background:#30303D">
+    <section class="credits">
       <div class="container container--text">
         <div class="article-body">
-          <a href="https://ciudatoslab.org/" target="_blank" rel="noopener" style="display:block; text-align:center; margin-bottom:var(--space-6);">
-            <img src="img/logo-ciudatos.png" alt="Ciudatos Lab" style="height:48px; width:auto; display:inline-block;">
+          <a href="https://ciudatoslab.org/" target="_blank" rel="noopener" class="credits__logo">
+            <img src="img/logo-ciudatos.png" alt="Ciudatos Lab">
           </a>
-          <h2 style="font-size:var(--text-2xl); margin-bottom:var(--space-4); color:#F4F4F4;">Créditos</h2>
-          <h3 style="color:#F4F4F4;">Entrevistas</h3>
-          <p style="color:#F4F4F4;">Esteban Morales, experto en gobernanza municipal. <br>José Antonio Prado, activista ciudadano.<br> Fuente anónima, funcionaria del municipio de La Paz.</p>
-          <h3 style="color:#F4F4F4;">Coordinación del proyecto</h3>
-          <p style="color:#F4F4F4;">Valeria Peredo</p>
-          <h3 style="color:#F4F4F4;">Autoría y recolección de datos</h3>
-          <p style="color:#F4F4F4;">Jocabet Alí, Edson Arteaga, Diego Bustamante, Silvana Cachi, Xisel Canaviri, Alexandra Crespo, Pablo Gómez, Darling Hurtado, Teresa Mamani, Thamy Montecinos, Jhoana Paula, Valeria Peredo, Claudia Rojas, Silvia Vasquez, Jimena Villca.</p>
+          <h2>Créditos</h2>
+          <h3>Entrevistas</h3>
+          <p>Esteban Morales, experto en gobernanza municipal. <br>José Antonio Prado, activista ciudadano.<br> Fuente anónima, funcionaria del municipio de La Paz.</p>
+          <h3>Coordinación del proyecto</h3>
+          <p>Valeria Peredo</p>
+          <h3>Autoría y recolección de datos</h3>
+          <p>Jocabet Alí, Edson Arteaga, Diego Bustamante, Silvana Cachi, Xisel Canaviri, Alexandra Crespo, Pablo Gómez, Darling Hurtado, Teresa Mamani, Thamy Montecinos, Jhoana Paula, Valeria Peredo, Claudia Rojas, Silvia Vasquez, Jimena Villca.</p>
         </div>
       </div>
     </section>
